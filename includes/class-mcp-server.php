@@ -27,30 +27,49 @@ class WP_MCP_Server {
 	}
 
 	/**
-	 * Register the MCP REST API routes.
+	 * Register the MCP REST API routes and intercept namespace root requests.
+	 *
+	 * WordPress auto-generates a GET-only namespace index at /mcp/v1 that
+	 * conflicts with our route at '/'. We use rest_pre_dispatch to intercept
+	 * POST and DELETE requests on the namespace root before WP's routing.
 	 */
 	public function register_routes() {
-		register_rest_route(
-			self::NAMESPACE,
-			'/',
-			array(
-				array(
-					'methods'             => 'POST',
-					'callback'            => array( $this, 'handle_post' ),
-					'permission_callback' => array( $this, 'check_permissions' ),
-				),
-				array(
-					'methods'             => 'GET',
-					'callback'            => array( $this, 'handle_get' ),
-					'permission_callback' => array( $this, 'check_permissions' ),
-				),
-				array(
-					'methods'             => 'DELETE',
-					'callback'            => array( $this, 'handle_delete' ),
-					'permission_callback' => array( $this, 'check_permissions' ),
-				),
-			)
-		);
+		add_filter( 'rest_pre_dispatch', array( $this, 'intercept_namespace_root' ), 10, 3 );
+	}
+
+	/**
+	 * Intercept POST and DELETE requests to the MCP namespace root.
+	 *
+	 * WordPress auto-generates a GET-only namespace index that shadows our
+	 * route. This filter fires before WP dispatches, letting us handle
+	 * POST and DELETE ourselves.
+	 */
+	public function intercept_namespace_root( $result, $server, $request ) {
+		$route  = $request->get_route();
+		$method = $request->get_method();
+
+		// Only intercept requests to our namespace root.
+		$is_root = ( '/mcp/v1' === $route || '/mcp/v1/' === $route );
+		if ( ! $is_root ) {
+			return $result;
+		}
+
+		// Let GET fall through to the namespace index (or our handler below).
+		if ( 'POST' !== $method && 'DELETE' !== $method ) {
+			return $result;
+		}
+
+		// Check permissions.
+		$permission = $this->check_permissions( $request );
+		if ( true !== $permission ) {
+			return rest_ensure_response( $permission );
+		}
+
+		if ( 'POST' === $method ) {
+			return rest_ensure_response( $this->handle_post( $request ) );
+		}
+
+		return rest_ensure_response( $this->handle_delete( $request ) );
 	}
 
 	/**

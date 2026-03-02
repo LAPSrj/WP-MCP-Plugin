@@ -27,6 +27,65 @@ class WP_MCP_OAuth {
 	public function init() {
 		add_action( 'parse_request', array( $this, 'handle_well_known' ) );
 		add_filter( 'rest_pre_serve_request', array( $this, 'add_cors_headers' ), 10, 4 );
+		add_filter( 'rest_authentication_errors', array( $this, 'allow_cookie_auth_for_authorize' ), 20 );
+		add_action( 'wp_loaded', array( $this, 'write_well_known_files' ) );
+	}
+
+	/**
+	 * Allow cookie-based authentication on the OAuth authorize endpoint.
+	 *
+	 * WordPress REST API requires an X-WP-Nonce header for cookie auth,
+	 * but the authorize endpoint is visited in the browser via redirect
+	 * (no way to send that header). Validate the login cookie manually.
+	 */
+	public function allow_cookie_auth_for_authorize( $result ) {
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
+
+		if ( false === strpos( $request_uri, '/mcp/v1/oauth/authorize' ) ) {
+			return $result;
+		}
+
+		$user_id = wp_validate_auth_cookie( '', 'logged_in' );
+		if ( $user_id ) {
+			wp_set_current_user( $user_id );
+			return true;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Write static .well-known JSON files so Nginx/Apache can serve them
+	 * even without passing the request through WordPress.
+	 */
+	public function write_well_known_files() {
+		$dir = ABSPATH . '.well-known';
+
+		$resource_file   = $dir . '/oauth-protected-resource';
+		$authserver_file = $dir . '/oauth-authorization-server';
+
+		$resource_json   = wp_json_encode( $this->get_protected_resource_metadata(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
+		$authserver_json = wp_json_encode( $this->get_authorization_server_metadata(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT );
+
+		// Only write if content changed or file missing.
+		$needs_resource   = ( ! file_exists( $resource_file ) || file_get_contents( $resource_file ) !== $resource_json );
+		$needs_authserver = ( ! file_exists( $authserver_file ) || file_get_contents( $authserver_file ) !== $authserver_json );
+
+		if ( ! $needs_resource && ! $needs_authserver ) {
+			return;
+		}
+
+		if ( ! is_dir( $dir ) ) {
+			wp_mkdir_p( $dir );
+		}
+
+		if ( $needs_resource ) {
+			file_put_contents( $resource_file, $resource_json );
+		}
+
+		if ( $needs_authserver ) {
+			file_put_contents( $authserver_file, $authserver_json );
+		}
 	}
 
 	/**
