@@ -22,10 +22,11 @@ class WP_MCP_OAuth {
 	const NAMESPACE = 'mcp/v1';
 
 	/**
-	 * Hook into WordPress to serve well-known endpoints.
+	 * Hook into WordPress to serve well-known endpoints and CORS headers.
 	 */
 	public function init() {
 		add_action( 'parse_request', array( $this, 'handle_well_known' ) );
+		add_filter( 'rest_pre_serve_request', array( $this, 'add_cors_headers' ), 10, 4 );
 	}
 
 	/**
@@ -76,14 +77,46 @@ class WP_MCP_OAuth {
 	public function handle_well_known( $wp ) {
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
 		$path        = wp_parse_url( $request_uri, PHP_URL_PATH );
+		$path        = rtrim( $path, '/' );
 
-		if ( '/.well-known/oauth-protected-resource' === $path ) {
+		$is_protected_resource = ( '/.well-known/oauth-protected-resource' === $path );
+		$is_auth_server        = ( '/.well-known/oauth-authorization-server' === $path );
+
+		if ( ! $is_protected_resource && ! $is_auth_server ) {
+			return;
+		}
+
+		// Handle CORS preflight.
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+		if ( 'OPTIONS' === $method ) {
+			$this->send_cors_preflight();
+		}
+
+		if ( $is_protected_resource ) {
 			$this->send_json( $this->get_protected_resource_metadata() );
 		}
 
-		if ( '/.well-known/oauth-authorization-server' === $path ) {
+		if ( $is_auth_server ) {
 			$this->send_json( $this->get_authorization_server_metadata() );
 		}
+	}
+
+	/**
+	 * Add CORS headers to all MCP REST API responses.
+	 */
+	public function add_cors_headers( $served, $result, $request, $server ) {
+		$route = $request->get_route();
+
+		if ( 0 !== strpos( $route, '/' . self::NAMESPACE ) ) {
+			return $served;
+		}
+
+		header( 'Access-Control-Allow-Origin: *' );
+		header( 'Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS' );
+		header( 'Access-Control-Allow-Headers: Content-Type, Accept, Authorization, Mcp-Session-Id, Mcp-Protocol-Version, Last-Event-ID' );
+		header( 'Access-Control-Expose-Headers: WWW-Authenticate, Mcp-Session-Id' );
+
+		return $served;
 	}
 
 	/**
@@ -509,12 +542,26 @@ class WP_MCP_OAuth {
 	}
 
 	/**
+	 * Send CORS preflight response and exit.
+	 */
+	private function send_cors_preflight() {
+		status_header( 204 );
+		header( 'Access-Control-Allow-Origin: *' );
+		header( 'Access-Control-Allow-Methods: GET, OPTIONS' );
+		header( 'Access-Control-Allow-Headers: Content-Type, Accept, Mcp-Protocol-Version' );
+		header( 'Access-Control-Max-Age: 86400' );
+		exit;
+	}
+
+	/**
 	 * Send a JSON response and exit.
 	 */
 	private function send_json( $data ) {
 		status_header( 200 );
 		header( 'Content-Type: application/json; charset=utf-8' );
 		header( 'Access-Control-Allow-Origin: *' );
+		header( 'Access-Control-Allow-Methods: GET, OPTIONS' );
+		header( 'Access-Control-Allow-Headers: Content-Type, Accept, Mcp-Protocol-Version' );
 		echo wp_json_encode( $data, JSON_UNESCAPED_SLASHES );
 		exit;
 	}
