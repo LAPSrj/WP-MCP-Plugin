@@ -179,10 +179,9 @@ class WP_MCP_Admin {
 						<h2><?php esc_html_e( 'How It Works', 'wp-mcp-server' ); ?></h2>
 						<ol>
 							<li><?php
-								printf(
-									/* translators: %s: "Generate Connection" (bold) */
-									esc_html__( 'Click %s to create an Application Password and auth token.', 'wp-mcp-server' ),
-									'<strong>' . esc_html__( 'Generate Connection', 'wp-mcp-server' ) . '</strong>'
+								echo wp_kses(
+									__( 'Click <strong>Generate Connection</strong> to create an Application Password and auth token.', 'wp-mcp-server' ),
+									array( 'strong' => array() )
 								);
 							?></li>
 							<li><?php esc_html_e( "Copy the config snippet into your MCP client's configuration file.", 'wp-mcp-server' ); ?></li>
