@@ -15,10 +15,11 @@ A WordPress plugin that exposes a [Model Context Protocol (MCP)](https://modelco
 
 ## Installation
 
-1. Upload the `wp-mcp-plugin` folder to `/wp-content/plugins/`
-2. Activate the plugin through the **Plugins** menu
-3. Go to **Settings > WP MCP Server**
-4. Copy the config snippet for your MCP client
+1. [Download the latest release](https://github.com/leandro/wp-mcp-plugin/releases/latest/download/wp-mcp-plugin.zip)
+2. Upload the zip via **Plugins > Add New > Upload Plugin** (or extract to `/wp-content/plugins/`)
+3. Activate the plugin through the **Plugins** menu
+4. Go to **Settings > WP MCP Server**
+5. Copy the config snippet for your MCP client
 
 ## Client Configuration
 
