@@ -93,11 +93,10 @@ class WP_MCP_Admin {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'WP MCP Server', 'wp-mcp-server' ); ?></h1>
 
-			<div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start;">
 
-				<!-- Left column: Endpoint + Connection setup -->
-				<div style="flex: 1; min-width: 340px; max-width: 560px;">
-
+				<!-- Column 1: Endpoint -->
+				<div>
 					<div class="card" style="max-width: none;">
 						<h2><?php esc_html_e( 'MCP Endpoint', 'wp-mcp-server' ); ?></h2>
 						<p><?php esc_html_e( 'AI agents connect to your site at:', 'wp-mcp-server' ); ?></p>
@@ -125,7 +124,10 @@ class WP_MCP_Admin {
 							?></textarea>
 						</div>
 					<?php endif; ?>
+				</div>
 
+				<!-- Column 2: Generate Connection -->
+				<div>
 					<div class="card" style="max-width: none;">
 						<h2><?php esc_html_e( 'Generate Connection', 'wp-mcp-server' ); ?></h2>
 						<p><?php esc_html_e( 'Select a WordPress user and click Generate. This creates an Application Password and gives you a ready-to-paste config snippet.', 'wp-mcp-server' ); ?></p>
@@ -155,26 +157,6 @@ class WP_MCP_Admin {
 						</form>
 					</div>
 
-				</div>
-
-				<!-- Right column: OAuth + How It Works -->
-				<div style="flex: 1; min-width: 340px; max-width: 560px;">
-
-					<div class="card" style="max-width: none; border-left: 4px solid #2271b1;">
-						<h2><?php esc_html_e( 'OAuth 2.1 Configuration', 'wp-mcp-server' ); ?></h2>
-						<p><?php esc_html_e( 'For MCP clients that support OAuth 2.1 (automatic authentication via browser). No token needed — the client handles login automatically.', 'wp-mcp-server' ); ?></p>
-
-						<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
-						<textarea readonly rows="7" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
-							echo esc_textarea( $this->build_oauth_config_json( $endpoint, false ) );
-						?></textarea>
-
-						<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
-						<textarea readonly rows="8" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
-							echo esc_textarea( $this->build_oauth_config_json( $endpoint, true ) );
-						?></textarea>
-					</div>
-
 					<div class="card" style="max-width: none;">
 						<h2><?php esc_html_e( 'How It Works', 'wp-mcp-server' ); ?></h2>
 						<ol>
@@ -189,7 +171,7 @@ class WP_MCP_Admin {
 							<li><?php esc_html_e( 'Restart your MCP client. It will connect to your site and discover all available REST API routes as tools.', 'wp-mcp-server' ); ?></li>
 						</ol>
 						<p><?php esc_html_e( 'Each REST API route becomes an MCP tool:', 'wp-mcp-server' ); ?></p>
-						<table class="widefat striped" style="max-width: 480px;">
+						<table class="widefat striped">
 							<thead><tr><th><?php esc_html_e( 'Route', 'wp-mcp-server' ); ?></th><th><?php esc_html_e( 'Tool Name', 'wp-mcp-server' ); ?></th></tr></thead>
 							<tbody>
 								<tr><td><code>/wp/v2/posts</code></td><td><code>posts</code></td></tr>
@@ -199,7 +181,24 @@ class WP_MCP_Admin {
 							</tbody>
 						</table>
 					</div>
+				</div>
 
+				<!-- Column 3: OAuth -->
+				<div>
+					<div class="card" style="max-width: none; border-left: 4px solid #2271b1;">
+						<h2><?php esc_html_e( 'OAuth 2.1 Configuration', 'wp-mcp-server' ); ?></h2>
+						<p><?php esc_html_e( 'For MCP clients that support OAuth 2.1 (automatic authentication via browser). No token needed — the client handles login automatically.', 'wp-mcp-server' ); ?></p>
+
+						<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
+						<textarea readonly rows="7" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+							echo esc_textarea( $this->build_oauth_config_json( $endpoint, false ) );
+						?></textarea>
+
+						<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
+						<textarea readonly rows="8" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+							echo esc_textarea( $this->build_oauth_config_json( $endpoint, true ) );
+						?></textarea>
+					</div>
 				</div>
 
 			</div>

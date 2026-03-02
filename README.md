@@ -114,16 +114,16 @@ For clients that don't support OAuth, you can use Application Passwords directly
 
 ## Tool Naming
 
-Routes are converted to dot-separated tool names:
+Routes are converted to underscore-separated tool names:
 
 | Route | Tool Name |
 |---|---|
 | `/wp/v2/posts` | `posts` |
-| `/wp/v2/posts/(?P<id>[\d]+)` | `posts.id` |
+| `/wp/v2/posts/(?P<id>[\d]+)` | `posts_id` |
 | `/wp/v2/categories` | `categories` |
 | `/wp/v2/media` | `media` |
-| `/wc/v3/products` | `wc.v3.products` |
-| `/acf/v1/posts/(?P<id>[\d]+)` | `acf.v1.posts.id` |
+| `/wc/v3/products` | `wc_v3_products` |
+| `/acf/v1/posts/(?P<id>[\d]+)` | `acf_v1_posts_id` |
 
 Every tool accepts a `method` parameter to specify the HTTP verb (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
 
