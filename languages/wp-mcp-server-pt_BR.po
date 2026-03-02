@@ -81,10 +81,9 @@ msgstr "Usuário WordPress"
 msgid "How It Works"
 msgstr "Como Funciona"
 
-#. translators: %s: "Generate Connection" (bold)
-#: includes/class-mcp-admin.php:171
-msgid "Click %s above to create an Application Password and auth token."
-msgstr "Clique em %s acima para criar uma Senha de Aplicativo e um token de autenticação."
+#: includes/class-mcp-admin.php:184
+msgid "Click <strong>Generate Connection</strong> to create an Application Password and auth token."
+msgstr "Clique em <strong>Gerar Conexão</strong> para criar uma Senha de Aplicativo e um token de autenticação."
 
 #: includes/class-mcp-admin.php:175
 msgid "Copy the config snippet into your MCP client's configuration file."

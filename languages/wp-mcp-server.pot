@@ -78,9 +78,8 @@ msgstr ""
 msgid "How It Works"
 msgstr ""
 
-#. translators: %s: "Generate Connection" (bold)
-#: includes/class-mcp-admin.php:171
-msgid "Click %s above to create an Application Password and auth token."
+#: includes/class-mcp-admin.php:184
+msgid "Click <strong>Generate Connection</strong> to create an Application Password and auth token."
 msgstr ""
 
 #: includes/class-mcp-admin.php:175
