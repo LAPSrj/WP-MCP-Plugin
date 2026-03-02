@@ -393,7 +393,10 @@ class WP_MCP_OAuth {
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Authorize — <?php echo esc_html( $site_name ); ?></title>
+	<title><?php
+		/* translators: %s: site name */
+		echo esc_html( sprintf( __( 'Authorize — %s', 'wp-mcp-server' ), $site_name ) );
+	?></title>
 	<style>
 		body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f0f1; margin: 0; padding: 40px 20px; }
 		.consent-box { max-width: 420px; margin: 0 auto; background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 24px 32px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
@@ -411,15 +414,24 @@ class WP_MCP_OAuth {
 </head>
 <body>
 	<div class="consent-box">
-		<h1>Authorize MCP Client</h1>
-		<p>An application wants to access <strong><?php echo esc_html( $site_name ); ?></strong> on your behalf.</p>
+		<h1><?php esc_html_e( 'Authorize MCP Client', 'wp-mcp-server' ); ?></h1>
+		<p><?php
+			/* translators: %s: site name (bold) */
+			printf( esc_html__( 'An application wants to access %s on your behalf.', 'wp-mcp-server' ), '<strong>' . esc_html( $site_name ) . '</strong>' );
+		?></p>
 
 		<div class="info">
-			<p>Logged in as <span class="user"><?php echo esc_html( $user->display_name ); ?></span> (<?php echo esc_html( $user->user_login ); ?>)</p>
-			<p>Redirect: <code><?php echo esc_html( $request->get_param( 'redirect_uri' ) ); ?></code></p>
+			<p><?php
+				/* translators: 1: user display name, 2: user login */
+				printf( esc_html__( 'Logged in as %1$s (%2$s)', 'wp-mcp-server' ), '<span class="user">' . esc_html( $user->display_name ) . '</span>', esc_html( $user->user_login ) );
+			?></p>
+			<p><?php
+				/* translators: %s: redirect URI */
+				printf( esc_html__( 'Redirect: %s', 'wp-mcp-server' ), '<code>' . esc_html( $request->get_param( 'redirect_uri' ) ) . '</code>' );
+			?></p>
 		</div>
 
-		<p>This will grant the application permission to act with your WordPress capabilities.</p>
+		<p><?php esc_html_e( 'This will grant the application permission to act with your WordPress capabilities.', 'wp-mcp-server' ); ?></p>
 
 		<form method="post" action="<?php echo esc_url( $action_url ); ?>">
 			<input type="hidden" name="wp_mcp_oauth_nonce" value="<?php echo esc_attr( $nonce ); ?>">
@@ -430,8 +442,8 @@ class WP_MCP_OAuth {
 			<input type="hidden" name="resource" value="<?php echo $resource; ?>">
 
 			<div class="buttons">
-				<button type="submit" name="consent" value="approve" class="btn btn-primary">Approve</button>
-				<button type="submit" name="consent" value="deny" class="btn btn-secondary">Deny</button>
+				<button type="submit" name="consent" value="approve" class="btn btn-primary"><?php esc_html_e( 'Approve', 'wp-mcp-server' ); ?></button>
+				<button type="submit" name="consent" value="deny" class="btn btn-secondary"><?php esc_html_e( 'Deny', 'wp-mcp-server' ); ?></button>
 			</div>
 		</form>
 	</div>

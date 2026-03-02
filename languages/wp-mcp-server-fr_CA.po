@@ -1,0 +1,147 @@
+# French (Canada) translation for WP MCP Server
+# Copyright (C) 2024 Leandro
+# This file is distributed under the PolyForm Strict License 1.0.0.
+msgid ""
+msgstr ""
+"Project-Id-Version: WP MCP Server 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/leandro/wp-mcp-plugin/issues\n"
+"POT-Creation-Date: 2026-03-01 00:00+0000\n"
+"PO-Revision-Date: 2026-03-01 00:00+0000\n"
+"Last-Translator: Leandro\n"
+"Language-Team: French (Canada)\n"
+"Language: fr_CA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: wp-mcp-plugin.php:47
+msgid "Settings"
+msgstr "Réglages"
+
+#: includes/class-mcp-admin.php:27 includes/class-mcp-admin.php:28
+#: includes/class-mcp-admin.php:97
+msgid "WP MCP Server"
+msgstr "WP MCP Server"
+
+#: includes/class-mcp-admin.php:55
+msgid "Invalid user selected."
+msgstr "Utilisateur sélectionné non valide."
+
+#: includes/class-mcp-admin.php:100
+msgid "MCP Endpoint"
+msgstr "Point d'accès MCP"
+
+#: includes/class-mcp-admin.php:101
+msgid "AI agents connect to your site at:"
+msgstr "Les agents IA se connectent à votre site à :"
+
+#: includes/class-mcp-admin.php:110
+msgid "Connection Ready"
+msgstr "Connexion prête"
+
+#: includes/class-mcp-admin.php:111
+msgid "An Application Password was created. Copy one of the configuration snippets below into your MCP client."
+msgstr "Un mot de passe d'application a été créé. Copiez l'un des extraits de configuration ci-dessous dans votre client MCP."
+
+#: includes/class-mcp-admin.php:112
+msgid "This token is shown only once."
+msgstr "Ce jeton n'est affiché qu'une seule fois."
+
+#: includes/class-mcp-admin.php:112
+msgid "If you lose it, generate a new one."
+msgstr "Si vous le perdez, générez-en un nouveau."
+
+#: includes/class-mcp-admin.php:127
+msgid "OAuth 2.1 Configuration"
+msgstr "Configuration OAuth 2.1"
+
+#: includes/class-mcp-admin.php:128
+msgid "For MCP clients that support OAuth 2.1 (automatic authentication via browser). No token needed — the client handles login automatically."
+msgstr "Pour les clients MCP qui prennent en charge OAuth 2.1 (authentification automatique via le navigateur). Aucun jeton requis — le client gère la connexion automatiquement."
+
+#: includes/class-mcp-admin.php:143 includes/class-mcp-admin.php:153
+#: includes/class-mcp-admin.php:163
+msgid "Generate Connection"
+msgstr "Générer la connexion"
+
+#: includes/class-mcp-admin.php:144
+msgid "Select a WordPress user and click Generate. This creates an Application Password and gives you a ready-to-paste config snippet."
+msgstr "Sélectionnez un utilisateur WordPress et cliquez sur Générer. Cela crée un mot de passe d'application et vous donne un extrait de configuration prêt à coller."
+
+#: includes/class-mcp-admin.php:145
+msgid "The user's permissions will apply to all MCP operations — choose a user with the appropriate role."
+msgstr "Les permissions de l'utilisateur s'appliqueront à toutes les opérations MCP — choisissez un utilisateur avec le rôle approprié."
+
+#: includes/class-mcp-admin.php:150
+msgid "WordPress User"
+msgstr "Utilisateur WordPress"
+
+#: includes/class-mcp-admin.php:168
+msgid "How It Works"
+msgstr "Comment ça fonctionne"
+
+#. translators: %s: "Generate Connection" (bold)
+#: includes/class-mcp-admin.php:171
+msgid "Click %s above to create an Application Password and auth token."
+msgstr "Cliquez sur %s ci-dessus pour créer un mot de passe d'application et un jeton d'authentification."
+
+#: includes/class-mcp-admin.php:175
+msgid "Copy the config snippet into your MCP client's configuration file."
+msgstr "Copiez l'extrait de configuration dans le fichier de configuration de votre client MCP."
+
+#: includes/class-mcp-admin.php:176
+msgid "Restart your MCP client. It will connect to your site and discover all available REST API routes as tools."
+msgstr "Redémarrez votre client MCP. Il se connectera à votre site et découvrira toutes les routes REST API disponibles en tant qu'outils."
+
+#: includes/class-mcp-admin.php:178
+msgid "Each REST API route becomes an MCP tool:"
+msgstr "Chaque route de la REST API devient un outil MCP :"
+
+#: includes/class-mcp-admin.php:180
+msgid "Route"
+msgstr "Route"
+
+#: includes/class-mcp-admin.php:180
+msgid "Tool Name"
+msgstr "Nom de l'outil"
+
+#. translators: %s: site name
+#: includes/class-mcp-oauth.php:399
+msgid "Authorize — %s"
+msgstr "Autoriser — %s"
+
+#: includes/class-mcp-oauth.php:417
+msgid "Authorize MCP Client"
+msgstr "Autoriser le client MCP"
+
+#. translators: %s: site name (bold)
+#: includes/class-mcp-oauth.php:420
+msgid "An application wants to access %s on your behalf."
+msgstr "Une application souhaite accéder à %s en votre nom."
+
+#. translators: 1: user display name, 2: user login
+#: includes/class-mcp-oauth.php:425
+msgid "Logged in as %1$s (%2$s)"
+msgstr "Connecté en tant que %1$s (%2$s)"
+
+#. translators: %s: redirect URI
+#: includes/class-mcp-oauth.php:429
+msgid "Redirect: %s"
+msgstr "Redirection : %s"
+
+#: includes/class-mcp-oauth.php:433
+msgid "This will grant the application permission to act with your WordPress capabilities."
+msgstr "Cela accordera à l'application la permission d'agir avec vos capacités WordPress."
+
+#: includes/class-mcp-oauth.php:437
+msgid "Approve"
+msgstr "Approuver"
+
+#: includes/class-mcp-oauth.php:438
+msgid "Deny"
+msgstr "Refuser"
+
+#: includes/class-mcp-server.php:94
+msgid "Authentication required."
+msgstr "Authentification requise."

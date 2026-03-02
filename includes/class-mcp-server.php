@@ -91,7 +91,7 @@ class WP_MCP_Server {
 
 		return new WP_Error(
 			'rest_forbidden',
-			'Authentication required.',
+			__( 'Authentication required.', 'wp-mcp-server' ),
 			array( 'status' => 401 )
 		);
 	}

@@ -9,6 +9,8 @@
  * Author: Leandro
  * License: PolyForm Strict License 1.0.0
  * License URI: https://polyformproject.org/licenses/strict/1.0.0
+ * Text Domain: wp-mcp-server
+ * Domain Path: /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,6 +20,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'WP_MCP_VERSION', '1.0.0' );
 define( 'WP_MCP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WP_MCP_BASENAME', plugin_basename( __FILE__ ) );
+
+add_action( 'init', function () {
+	load_plugin_textdomain( 'wp-mcp-server', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+} );
 
 require_once WP_MCP_PATH . 'includes/class-mcp-discovery.php';
 require_once WP_MCP_PATH . 'includes/class-mcp-executor.php';
@@ -42,6 +48,6 @@ $wp_mcp_admin->init();
 
 add_filter( 'plugin_action_links_' . WP_MCP_BASENAME, function ( $links ) {
 	$url     = admin_url( 'options-general.php?page=' . WP_MCP_Admin::PAGE_SLUG );
-	$links[] = '<a href="' . esc_url( $url ) . '">Settings</a>';
+	$links[] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Settings', 'wp-mcp-server' ) . '</a>';
 	return $links;
 } );
