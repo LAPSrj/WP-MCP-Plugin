@@ -124,10 +124,7 @@ class WP_MCP_Admin {
 							?></textarea>
 						</div>
 					<?php endif; ?>
-				</div>
 
-				<!-- Column 2: Generate Connection -->
-				<div>
 					<div class="card" style="max-width: none;">
 						<h2><?php esc_html_e( 'Generate Connection', 'wp-mcp-server' ); ?></h2>
 						<p><?php esc_html_e( 'Select a WordPress user and click Generate. This creates an Application Password and gives you a ready-to-paste config snippet.', 'wp-mcp-server' ); ?></p>
@@ -156,7 +153,28 @@ class WP_MCP_Admin {
 							<?php submit_button( __( 'Generate Connection', 'wp-mcp-server' ), 'primary', 'submit', true ); ?>
 						</form>
 					</div>
+				</div>
 
+				<!-- Column 2: OAuth -->
+				<div>
+					<div class="card" style="max-width: none; border-left: 4px solid #2271b1;">
+						<h2><?php esc_html_e( 'OAuth 2.1 Configuration', 'wp-mcp-server' ); ?></h2>
+						<p><?php esc_html_e( 'For MCP clients that support OAuth 2.1 (automatic authentication via browser). No token needed — the client handles login automatically.', 'wp-mcp-server' ); ?></p>
+
+						<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
+						<textarea readonly rows="7" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+							echo esc_textarea( $this->build_oauth_config_json( $endpoint, false ) );
+						?></textarea>
+
+						<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
+						<textarea readonly rows="8" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+							echo esc_textarea( $this->build_oauth_config_json( $endpoint, true ) );
+						?></textarea>
+					</div>
+				</div>
+
+				<!-- Column 3: How It Works -->
+				<div>
 					<div class="card" style="max-width: none;">
 						<h2><?php esc_html_e( 'How It Works', 'wp-mcp-server' ); ?></h2>
 						<ol>
@@ -180,24 +198,6 @@ class WP_MCP_Admin {
 								<tr><td><code>/wc/v3/products</code></td><td><code>wc_v3_products</code></td></tr>
 							</tbody>
 						</table>
-					</div>
-				</div>
-
-				<!-- Column 3: OAuth -->
-				<div>
-					<div class="card" style="max-width: none; border-left: 4px solid #2271b1;">
-						<h2><?php esc_html_e( 'OAuth 2.1 Configuration', 'wp-mcp-server' ); ?></h2>
-						<p><?php esc_html_e( 'For MCP clients that support OAuth 2.1 (automatic authentication via browser). No token needed — the client handles login automatically.', 'wp-mcp-server' ); ?></p>
-
-						<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
-						<textarea readonly rows="7" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
-							echo esc_textarea( $this->build_oauth_config_json( $endpoint, false ) );
-						?></textarea>
-
-						<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
-						<textarea readonly rows="8" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
-							echo esc_textarea( $this->build_oauth_config_json( $endpoint, true ) );
-						?></textarea>
 					</div>
 				</div>
 
