@@ -26,6 +26,7 @@ class WP_MCP_Discovery {
 		$rest_server  = rest_get_server();
 		$routes       = $rest_server->get_routes();
 		$acf_active   = $this->is_acf_active( $routes );
+		$used_names   = array();
 
 		foreach ( $routes as $pattern => $endpoints_data ) {
 			if ( '/' === $pattern ) {
@@ -43,7 +44,22 @@ class WP_MCP_Discovery {
 				continue;
 			}
 
-			$tool_name    = $this->build_tool_name( $pattern );
+			$tool_name = $this->build_tool_name( $pattern );
+
+			if ( empty( $tool_name ) ) {
+				continue;
+			}
+
+			// Deduplicate names that collide after sanitization/truncation.
+			if ( isset( $used_names[ $tool_name ] ) ) {
+				$suffix = 2;
+				while ( isset( $used_names[ $tool_name . '_' . $suffix ] ) ) {
+					$suffix++;
+				}
+				$tool_name = $tool_name . '_' . $suffix;
+			}
+			$used_names[ $tool_name ] = true;
+
 			$description  = $this->build_tool_description( $pattern, $methods );
 			$input_schema = $this->build_input_schema( $endpoints_data, $path_params, $pattern, $methods, $acf_active );
 
@@ -127,15 +143,56 @@ class WP_MCP_Discovery {
 	/**
 	 * Build a tool name from a route pattern.
 	 * /wp/v2/posts => posts
-	 * /wp/v2/posts/(?P<id>[\d]+) => posts.id
-	 * /wc/v3/products => wc.v3.products
+	 * /wp/v2/posts/(?P<id>[\d]+) => posts_id
+	 * /wc/v3/products => wc_v3_products
 	 */
 	private function build_tool_name( $pattern ) {
+		// Strip /wp/v2/ prefix for core routes (handled first, before general cleanup).
 		$name = preg_replace( '#^/wp/v2/#', '/', $pattern );
-		$name = preg_replace( '/\(\?P<([^>]+)>[^)]+\)/', '$1', $name );
-		$name = str_replace( '/', '.', $name );
-		$name = ltrim( $name, '.' );
-		return $name;
+
+		// Extract named capture groups: (?P<id>...) → id
+		$name = preg_replace( '/\(\?P<([^>]+)>[^)]*\)/', '$1', $name );
+
+		// Remove any remaining regex fragments (parentheses, brackets, etc.)
+		$name = preg_replace( '/\([^)]*\)/', '', $name );
+
+		$name = str_replace( '/', '_', $name );
+
+		// Strip any characters not allowed by MCP spec.
+		$name = preg_replace( '/[^a-zA-Z0-9_-]/', '', $name );
+
+		// Collapse multiple underscores/hyphens.
+		$name = preg_replace( '/_+/', '_', $name );
+
+		$name = trim( $name, '_' );
+
+		if ( strlen( $name ) <= 64 ) {
+			return $name;
+		}
+
+		// Progressively shorten:
+		// 1. Strip "wp-" or "wp_" prefix from non-core namespaces.
+		$shortened = preg_replace( '/^wp[-_]/', '', $name );
+		if ( strlen( $shortened ) <= 64 ) {
+			return $shortened;
+		}
+
+		// 2. Keep first two and last two segments for readability.
+		$parts = explode( '_', $shortened );
+		if ( count( $parts ) > 4 ) {
+			$candidate = $parts[0] . '_' . $parts[1] . '_' . $parts[ count( $parts ) - 2 ] . '_' . $parts[ count( $parts ) - 1 ];
+			if ( strlen( $candidate ) <= 64 ) {
+				return $candidate;
+			}
+		}
+
+		// 3. Last resort: keep start and end with a hash for uniqueness.
+		$hash = substr( md5( $name ), 0, 6 );
+		$max  = 64 - strlen( $hash ) - 2; // 2 underscores
+		$head = substr( $shortened, 0, intval( $max / 2 ) );
+		$tail = substr( $shortened, -intval( $max / 2 ) );
+
+		return rtrim( $head, '_' ) . '_' . $hash . '_' . ltrim( $tail, '_' );
 	}
 
 	/**
