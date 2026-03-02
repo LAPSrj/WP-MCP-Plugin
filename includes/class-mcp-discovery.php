@@ -59,6 +59,17 @@ class WP_MCP_Discovery {
 			);
 		}
 
+		/**
+		 * Filter the list of MCP tools exposed to clients.
+		 *
+		 * Allows site administrators to restrict which REST API routes
+		 * are available as MCP tools (e.g. remove sensitive endpoints).
+		 *
+		 * @param array $tools       Array of MCP tool definitions.
+		 * @param array $tool_routes Map of tool name to route info.
+		 */
+		$this->tools = apply_filters( 'wp_mcp_tools', $this->tools, $this->tool_routes );
+
 		return $this->tools;
 	}
 

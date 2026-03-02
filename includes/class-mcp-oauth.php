@@ -191,8 +191,19 @@ class WP_MCP_OAuth {
 
 		// If not logged in, redirect to WordPress login and come back.
 		if ( ! is_user_logged_in() ) {
-			$current_url = set_url_scheme( 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] );
-			wp_redirect( wp_login_url( $current_url ) );
+			$current_url = add_query_arg(
+				array(
+					'response_type'         => $response_type,
+					'client_id'             => $client_id,
+					'redirect_uri'          => $redirect_uri,
+					'state'                 => $state,
+					'code_challenge'        => $code_challenge,
+					'code_challenge_method' => $code_challenge_method,
+					'resource'              => $resource,
+				),
+				rest_url( self::NAMESPACE . '/oauth/authorize' )
+			);
+			wp_safe_redirect( wp_login_url( $current_url ) );
 			exit;
 		}
 
