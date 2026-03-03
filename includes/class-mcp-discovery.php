@@ -75,6 +75,16 @@ class WP_MCP_Discovery {
 			);
 		}
 
+		// Built-in tool: refresh_tools — lets agents trigger a tools/list re-fetch.
+		array_unshift( $this->tools, array(
+			'name'        => 'refresh_tools',
+			'description' => 'Re-discover all WordPress REST API routes and update the tool list. Use this after registering new post types, installing plugins, or any change that adds/removes REST API endpoints.',
+			'inputSchema' => array(
+				'type'       => 'object',
+				'properties' => new stdClass(),
+			),
+		) );
+
 		/**
 		 * Filter the list of MCP tools exposed to clients.
 		 *
@@ -87,6 +97,14 @@ class WP_MCP_Discovery {
 		$this->tools = apply_filters( 'wp_mcp_tools', $this->tools, $this->tool_routes );
 
 		return $this->tools;
+	}
+
+	/**
+	 * Reset the cached tool list, forcing re-discovery on next get_tools() call.
+	 */
+	public function reset() {
+		$this->tools       = null;
+		$this->tool_routes = array();
 	}
 
 	/**

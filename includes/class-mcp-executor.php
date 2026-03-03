@@ -25,6 +25,10 @@ class WP_MCP_Executor {
 	 * @return array MCP tool result with 'content' array.
 	 */
 	public function execute( $tool_name, $arguments ) {
+		if ( 'refresh_tools' === $tool_name ) {
+			return $this->handle_refresh_tools();
+		}
+
 		$route_info = $this->discovery->get_tool_route( $tool_name );
 
 		if ( ! $route_info ) {
@@ -60,6 +64,30 @@ class WP_MCP_Executor {
 		$response = rest_do_request( $request );
 
 		return $this->format_response( $response );
+	}
+
+	/**
+	 * Handle the refresh_tools built-in tool.
+	 *
+	 * Forces re-discovery of REST API routes and returns the updated count.
+	 * The server will include a tools/list_changed notification in the response
+	 * so the client knows to re-fetch the tool list.
+	 */
+	private function handle_refresh_tools() {
+		$this->discovery->reset();
+		$tools = $this->discovery->get_tools();
+		$count = count( $tools );
+
+		return array(
+			'content' => array(
+				array(
+					'type' => 'text',
+					'text' => 'Refreshed tool list. Discovered ' . $count . ' tools.',
+				),
+			),
+			'isError'          => false,
+			'_tools_refreshed' => true,
+		);
 	}
 
 	/**

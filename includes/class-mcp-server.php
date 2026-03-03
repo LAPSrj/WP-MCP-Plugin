@@ -216,6 +216,7 @@ class WP_MCP_Server {
 		}
 
 		$result = $this->executor->execute( $tool_name, $arguments );
+		unset( $result['_tools_refreshed'] );
 
 		return $this->jsonrpc_response( $id, $result );
 	}
