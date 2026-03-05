@@ -1,0 +1,200 @@
+/* Endpoint Settings Tab Styles */
+
+.wp-mcp-mode-selector {
+	margin: 15px 0 20px;
+}
+
+.wp-mcp-mode-selector label {
+	display: block;
+	padding: 10px 12px;
+	margin-bottom: 6px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	cursor: pointer;
+	background: #fff;
+	transition: border-color 0.15s, background-color 0.15s;
+}
+
+.wp-mcp-mode-selector label:hover {
+	border-color: #2271b1;
+}
+
+.wp-mcp-mode-selector label.active {
+	border-color: #2271b1;
+	background: #f0f6fc;
+}
+
+.wp-mcp-mode-selector input[type="radio"] {
+	margin-right: 8px;
+}
+
+.wp-mcp-mode-selector .mode-description {
+	display: block;
+	margin-left: 26px;
+	color: #646970;
+	font-size: 13px;
+}
+
+/* Endpoint list panel */
+.wp-mcp-endpoint-panel {
+	margin-top: 20px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.wp-mcp-endpoint-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	border-bottom: 1px solid #dcdcde;
+	background: #f6f7f7;
+	flex-wrap: wrap;
+}
+
+.wp-mcp-endpoint-toolbar .search-input {
+	flex: 1;
+	min-width: 200px;
+	padding: 4px 8px;
+}
+
+.wp-mcp-endpoint-toolbar .counter {
+	color: #646970;
+	font-size: 13px;
+	white-space: nowrap;
+}
+
+.wp-mcp-endpoint-toolbar .bulk-actions button {
+	margin-left: 4px;
+}
+
+.wp-mcp-endpoint-list {
+	max-height: 500px;
+	overflow-y: auto;
+}
+
+/* Namespace group */
+.wp-mcp-namespace-group {
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.wp-mcp-namespace-group:last-child {
+	border-bottom: 0;
+}
+
+.wp-mcp-namespace-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: #f9f9f9;
+	cursor: pointer;
+	user-select: none;
+	font-weight: 600;
+	font-size: 13px;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.wp-mcp-namespace-header:hover {
+	background: #f0f0f1;
+}
+
+.wp-mcp-namespace-header .toggle-icon {
+	transition: transform 0.15s;
+	font-size: 12px;
+	width: 16px;
+	text-align: center;
+}
+
+.wp-mcp-namespace-header .toggle-icon.collapsed {
+	transform: rotate(-90deg);
+}
+
+.wp-mcp-namespace-header .group-select-all {
+	margin-left: auto;
+	font-weight: normal;
+	font-size: 12px;
+}
+
+.wp-mcp-namespace-routes {
+	padding: 0;
+}
+
+.wp-mcp-namespace-routes.collapsed {
+	display: none;
+}
+
+.wp-mcp-route-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 12px 6px 36px;
+	border-bottom: 1px solid #f9f9f9;
+	font-size: 13px;
+}
+
+.wp-mcp-route-row:last-child {
+	border-bottom: 0;
+}
+
+.wp-mcp-route-row:hover {
+	background: #f6f7f7;
+}
+
+.wp-mcp-route-row .route-pattern {
+	font-family: monospace;
+	font-size: 12px;
+	flex: 1;
+	word-break: break-all;
+}
+
+.wp-mcp-route-row .route-pattern.filtered-out {
+	display: none;
+}
+
+.wp-mcp-method-badge {
+	display: inline-block;
+	padding: 1px 5px;
+	border-radius: 3px;
+	font-size: 10px;
+	font-weight: 600;
+	font-family: monospace;
+	line-height: 16px;
+}
+
+.wp-mcp-method-badge.method-GET { background: #dff0d8; color: #3c763d; }
+.wp-mcp-method-badge.method-POST { background: #d9edf7; color: #31708f; }
+.wp-mcp-method-badge.method-PUT { background: #fcf8e3; color: #8a6d3b; }
+.wp-mcp-method-badge.method-PATCH { background: #fcf8e3; color: #8a6d3b; }
+.wp-mcp-method-badge.method-DELETE { background: #f2dede; color: #a94442; }
+
+/* Auto-disable checkbox */
+.wp-mcp-auto-disable {
+	margin-top: 15px;
+	padding: 10px 12px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+}
+
+/* Save feedback */
+.wp-mcp-save-row {
+	margin-top: 20px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.wp-mcp-save-feedback {
+	font-size: 13px;
+	transition: opacity 0.3s;
+}
+
+.wp-mcp-save-feedback.success {
+	color: #00a32a;
+}
+
+.wp-mcp-save-feedback.error {
+	color: #d63638;
+}

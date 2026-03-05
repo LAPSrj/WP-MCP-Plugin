@@ -85,6 +85,9 @@ class WP_MCP_Discovery {
 			),
 		) );
 
+		// Apply endpoint filtering settings before the wp_mcp_tools filter.
+		$this->apply_endpoint_settings();
+
 		/**
 		 * Filter the list of MCP tools exposed to clients.
 		 *
@@ -115,6 +118,173 @@ class WP_MCP_Discovery {
 			$this->get_tools();
 		}
 		return isset( $this->tool_routes[ $tool_name ] ) ? $this->tool_routes[ $tool_name ] : null;
+	}
+
+	/**
+	 * Get all route patterns grouped by namespace, for the admin UI.
+	 *
+	 * @return array Array of arrays with 'pattern', 'methods', 'namespace' keys.
+	 */
+	public function get_all_route_patterns() {
+		$rest_server = rest_get_server();
+		$routes      = $rest_server->get_routes();
+		$result      = array();
+
+		foreach ( $routes as $pattern => $endpoints_data ) {
+			if ( '/' === $pattern ) {
+				continue;
+			}
+			if ( 0 === strpos( $pattern, '/mcp/' ) ) {
+				continue;
+			}
+
+			$methods = $this->get_all_methods( $endpoints_data );
+			if ( empty( $methods ) ) {
+				continue;
+			}
+
+			// Extract namespace (first two segments, e.g. "wp/v2").
+			$parts     = explode( '/', ltrim( $pattern, '/' ) );
+			$namespace = count( $parts ) >= 2 ? $parts[0] . '/' . $parts[1] : $parts[0];
+
+			$result[] = array(
+				'pattern'   => $pattern,
+				'methods'   => $methods,
+				'namespace' => $namespace,
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Apply admin endpoint filtering settings to the tool list.
+	 */
+	private function apply_endpoint_settings() {
+		$settings = get_option( 'wp_mcp_endpoint_settings', array() );
+		$mode     = isset( $settings['mode'] ) ? $settings['mode'] : 'all';
+
+		if ( 'all' === $mode ) {
+			return;
+		}
+
+		if ( 'compact' === $mode ) {
+			$this->apply_compact_mode();
+			return;
+		}
+
+		$selected     = isset( $settings['endpoints'] ) ? $settings['endpoints'] : array();
+		$selected_map = array_flip( $selected );
+
+		if ( 'allowlist' === $mode ) {
+			$filtered       = array();
+			$filtered_routes = array();
+
+			foreach ( $this->tools as $tool ) {
+				// Always keep built-in tools (refresh_tools).
+				if ( 'refresh_tools' === $tool['name'] ) {
+					$filtered[] = $tool;
+					continue;
+				}
+
+				$route_info = isset( $this->tool_routes[ $tool['name'] ] ) ? $this->tool_routes[ $tool['name'] ] : null;
+				if ( $route_info && isset( $selected_map[ $route_info['pattern'] ] ) ) {
+					$filtered[]                              = $tool;
+					$filtered_routes[ $tool['name'] ] = $route_info;
+				}
+			}
+
+			$this->tools       = $filtered;
+			$this->tool_routes = $filtered_routes;
+			return;
+		}
+
+		if ( 'blocklist' === $mode ) {
+			$auto_disable  = ! empty( $settings['auto_disable_new'] );
+			$known_routes  = isset( $settings['known_routes'] ) ? $settings['known_routes'] : array();
+			$known_map     = array_flip( $known_routes );
+
+			$filtered       = array();
+			$filtered_routes = array();
+
+			foreach ( $this->tools as $tool ) {
+				if ( 'refresh_tools' === $tool['name'] ) {
+					$filtered[] = $tool;
+					continue;
+				}
+
+				$route_info = isset( $this->tool_routes[ $tool['name'] ] ) ? $this->tool_routes[ $tool['name'] ] : null;
+				if ( ! $route_info ) {
+					$filtered[] = $tool;
+					continue;
+				}
+
+				// Block if explicitly selected.
+				if ( isset( $selected_map[ $route_info['pattern'] ] ) ) {
+					continue;
+				}
+
+				// Auto-disable: block routes not in the known snapshot.
+				if ( $auto_disable && ! isset( $known_map[ $route_info['pattern'] ] ) ) {
+					continue;
+				}
+
+				$filtered[]                              = $tool;
+				$filtered_routes[ $tool['name'] ] = $route_info;
+			}
+
+			$this->tools       = $filtered;
+			$this->tool_routes = $filtered_routes;
+		}
+	}
+
+	/**
+	 * Replace all tools with the compact wp_api universal tool.
+	 */
+	private function apply_compact_mode() {
+		$this->tools = array(
+			array(
+				'name'        => 'refresh_tools',
+				'description' => 'Re-discover all WordPress REST API routes and update the tool list. Use this after registering new post types, installing plugins, or any change that adds/removes REST API endpoints.',
+				'inputSchema' => array(
+					'type'       => 'object',
+					'properties' => new stdClass(),
+				),
+			),
+			array(
+				'name'        => 'wp_api',
+				'description' => 'Universal WordPress REST API tool. Make any REST API request to your WordPress site. Examples: {"method":"GET","path":"/wp/v2/posts"} to list posts, {"method":"POST","path":"/wp/v2/posts","params":{"title":"Hello","status":"draft"}} to create a post, {"method":"GET","path":"/wp/v2/users/me"} to get current user info. For media uploads, include file_content (base64) and file_name. Use GET /wp/v2 to discover all available routes.',
+				'inputSchema' => array(
+					'type'       => 'object',
+					'properties' => array(
+						'method'       => array(
+							'type'        => 'string',
+							'enum'        => array( 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ),
+							'description' => 'HTTP method to use.',
+						),
+						'path'         => array(
+							'type'        => 'string',
+							'description' => 'REST API path, e.g. /wp/v2/posts or /wp/v2/posts/123.',
+						),
+						'params'       => array(
+							'type'        => 'object',
+							'description' => 'Query parameters (for GET/DELETE) or body parameters (for POST/PUT/PATCH).',
+						),
+						'file_content' => array(
+							'type'        => 'string',
+							'description' => 'Base64-encoded file content for media upload.',
+						),
+						'file_name'    => array(
+							'type'        => 'string',
+							'description' => 'Filename with extension for media upload (e.g. image.jpg).',
+						),
+					),
+					'required'   => array( 'method', 'path' ),
+				),
+			),
+		);
+
+		$this->tool_routes = array();
 	}
 
 	/**

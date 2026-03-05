@@ -29,6 +29,10 @@ class WP_MCP_Executor {
 			return $this->handle_refresh_tools();
 		}
 
+		if ( 'wp_api' === $tool_name ) {
+			return $this->handle_wp_api( $arguments );
+		}
+
 		$route_info = $this->discovery->get_tool_route( $tool_name );
 
 		if ( ! $route_info ) {
@@ -88,6 +92,55 @@ class WP_MCP_Executor {
 			'isError'          => false,
 			'_tools_refreshed' => true,
 		);
+	}
+
+	/**
+	 * Handle the compact mode wp_api universal tool.
+	 */
+	private function handle_wp_api( $arguments ) {
+		$method = isset( $arguments['method'] ) ? strtoupper( $arguments['method'] ) : '';
+		$path   = isset( $arguments['path'] ) ? $arguments['path'] : '';
+		$params = isset( $arguments['params'] ) ? $arguments['params'] : array();
+
+		if ( empty( $path ) || '/' !== $path[0] ) {
+			return $this->error_result( 'Invalid or missing path. Must start with /.' );
+		}
+
+		$valid_methods = array( 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' );
+		if ( ! in_array( $method, $valid_methods, true ) ) {
+			return $this->error_result( 'Invalid method. Must be one of: ' . implode( ', ', $valid_methods ) );
+		}
+
+		if ( ! is_array( $params ) ) {
+			$params = array();
+		}
+
+		// Handle media upload when file_content and file_name are provided.
+		$file_content = isset( $arguments['file_content'] ) ? $arguments['file_content'] : '';
+		$file_name    = isset( $arguments['file_name'] ) ? $arguments['file_name'] : '';
+
+		if ( ! empty( $file_content ) && ! empty( $file_name ) ) {
+			return $this->handle_media_upload( $path, array_merge(
+				$params,
+				array(
+					'file_content' => $file_content,
+					'file_name'    => $file_name,
+				)
+			) );
+		}
+
+		$request = new WP_REST_Request( $method, $path );
+
+		if ( 'GET' === $method || 'DELETE' === $method ) {
+			$request->set_query_params( $params );
+		} else {
+			$request->set_header( 'Content-Type', 'application/json' );
+			$request->set_body( wp_json_encode( $params ) );
+		}
+
+		$response = rest_do_request( $request );
+
+		return $this->format_response( $response );
 	}
 
 	/**
