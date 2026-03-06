@@ -88,6 +88,9 @@ class WP_MCP_Discovery {
 		// Apply endpoint filtering settings before the wp_mcp_tools filter.
 		$this->apply_endpoint_settings();
 
+		// Apply minimal descriptions if enabled.
+		$this->maybe_apply_minimal_descriptions();
+
 		/**
 		 * Filter the list of MCP tools exposed to clients.
 		 *
@@ -158,6 +161,88 @@ class WP_MCP_Discovery {
 	}
 
 	/**
+	 * Determine the category for a route pattern.
+	 *
+	 * @param string $pattern Route pattern.
+	 * @return string One of 'post_types', 'taxonomies', 'core', 'plugin'.
+	 */
+	public function get_route_category( $pattern ) {
+		// Non wp/v2 routes are always "plugin".
+		if ( 0 !== strpos( $pattern, '/wp/v2/' ) ) {
+			return 'plugin';
+		}
+
+		// Extract the rest_base segment (third segment after /wp/v2/).
+		$trimmed  = substr( $pattern, 7 ); // Remove "/wp/v2/"
+		$slash    = strpos( $trimmed, '/' );
+		$rest_base = ( false !== $slash ) ? substr( $trimmed, 0, $slash ) : $trimmed;
+
+		// Check post types.
+		$post_types = get_post_types( array( 'show_in_rest' => true ), 'objects' );
+		foreach ( $post_types as $pt ) {
+			if ( ! empty( $pt->rest_base ) && $pt->rest_base === $rest_base ) {
+				return 'post_types';
+			}
+			if ( empty( $pt->rest_base ) && $pt->name === $rest_base ) {
+				return 'post_types';
+			}
+		}
+
+		// Check taxonomies.
+		$taxonomies = get_taxonomies( array( 'show_in_rest' => true ), 'objects' );
+		foreach ( $taxonomies as $tax ) {
+			if ( ! empty( $tax->rest_base ) && $tax->rest_base === $rest_base ) {
+				return 'taxonomies';
+			}
+			if ( empty( $tax->rest_base ) && $tax->name === $rest_base ) {
+				return 'taxonomies';
+			}
+		}
+
+		// Remaining wp/v2 routes are "core".
+		return 'core';
+	}
+
+	/**
+	 * Get all route patterns grouped by category, for the description mode admin UI.
+	 *
+	 * @return array Associative array with category keys, each containing an array of route info.
+	 */
+	public function get_all_route_patterns_grouped() {
+		$rest_server = rest_get_server();
+		$routes      = $rest_server->get_routes();
+		$grouped     = array(
+			'post_types' => array(),
+			'taxonomies' => array(),
+			'core'       => array(),
+			'plugin'     => array(),
+		);
+
+		foreach ( $routes as $pattern => $endpoints_data ) {
+			if ( '/' === $pattern ) {
+				continue;
+			}
+			if ( 0 === strpos( $pattern, '/mcp/' ) ) {
+				continue;
+			}
+
+			$methods = $this->get_all_methods( $endpoints_data );
+			if ( empty( $methods ) ) {
+				continue;
+			}
+
+			$category = $this->get_route_category( $pattern );
+
+			$grouped[ $category ][] = array(
+				'pattern' => $pattern,
+				'methods' => $methods,
+			);
+		}
+
+		return $grouped;
+	}
+
+	/**
 	 * Apply admin endpoint filtering settings to the tool list.
 	 */
 	private function apply_endpoint_settings() {
@@ -176,21 +261,47 @@ class WP_MCP_Discovery {
 		$selected     = isset( $settings['endpoints'] ) ? $settings['endpoints'] : array();
 		$selected_map = array_flip( $selected );
 
+		// Per-category "include new items" with backward compat for old auto_disable_new.
+		$endpoint_include_new = isset( $settings['endpoint_include_new'] ) ? $settings['endpoint_include_new'] : array();
+		$known_routes         = isset( $settings['known_routes'] ) ? $settings['known_routes'] : array();
+		$known_map            = array_flip( $known_routes );
+
+		// Backward compat: old auto_disable_new (blocklist only) → all categories.
+		if ( empty( $endpoint_include_new ) && ! empty( $settings['auto_disable_new'] ) && 'blocklist' === $mode ) {
+			$endpoint_include_new = array( 'post_types', 'taxonomies', 'core', 'plugin' );
+		}
+
 		if ( 'allowlist' === $mode ) {
-			$filtered       = array();
+			$filtered        = array();
 			$filtered_routes = array();
 
 			foreach ( $this->tools as $tool ) {
-				// Always keep built-in tools (refresh_tools).
 				if ( 'refresh_tools' === $tool['name'] ) {
 					$filtered[] = $tool;
 					continue;
 				}
 
 				$route_info = isset( $this->tool_routes[ $tool['name'] ] ) ? $this->tool_routes[ $tool['name'] ] : null;
-				if ( $route_info && isset( $selected_map[ $route_info['pattern'] ] ) ) {
-					$filtered[]                              = $tool;
-					$filtered_routes[ $tool['name'] ] = $route_info;
+				if ( ! $route_info ) {
+					continue;
+				}
+
+				$pattern = $route_info['pattern'];
+
+				// Include if explicitly selected.
+				if ( isset( $selected_map[ $pattern ] ) ) {
+					$filtered[]                        = $tool;
+					$filtered_routes[ $tool['name'] ]  = $route_info;
+					continue;
+				}
+
+				// Auto-include new routes in categories with "include new items" checked.
+				if ( ! empty( $endpoint_include_new ) && ! isset( $known_map[ $pattern ] ) ) {
+					$category = $this->get_route_category( $pattern );
+					if ( in_array( $category, $endpoint_include_new, true ) ) {
+						$filtered[]                        = $tool;
+						$filtered_routes[ $tool['name'] ]  = $route_info;
+					}
 				}
 			}
 
@@ -200,11 +311,7 @@ class WP_MCP_Discovery {
 		}
 
 		if ( 'blocklist' === $mode ) {
-			$auto_disable  = ! empty( $settings['auto_disable_new'] );
-			$known_routes  = isset( $settings['known_routes'] ) ? $settings['known_routes'] : array();
-			$known_map     = array_flip( $known_routes );
-
-			$filtered       = array();
+			$filtered        = array();
 			$filtered_routes = array();
 
 			foreach ( $this->tools as $tool ) {
@@ -219,23 +326,129 @@ class WP_MCP_Discovery {
 					continue;
 				}
 
+				$pattern = $route_info['pattern'];
+
 				// Block if explicitly selected.
-				if ( isset( $selected_map[ $route_info['pattern'] ] ) ) {
+				if ( isset( $selected_map[ $pattern ] ) ) {
 					continue;
 				}
 
-				// Auto-disable: block routes not in the known snapshot.
-				if ( $auto_disable && ! isset( $known_map[ $route_info['pattern'] ] ) ) {
-					continue;
+				// Auto-block new routes in categories with "include new items" checked.
+				if ( ! empty( $endpoint_include_new ) && ! isset( $known_map[ $pattern ] ) ) {
+					$category = $this->get_route_category( $pattern );
+					if ( in_array( $category, $endpoint_include_new, true ) ) {
+						continue;
+					}
 				}
 
-				$filtered[]                              = $tool;
-				$filtered_routes[ $tool['name'] ] = $route_info;
+				$filtered[]                        = $tool;
+				$filtered_routes[ $tool['name'] ]  = $route_info;
 			}
 
 			$this->tools       = $filtered;
 			$this->tool_routes = $filtered_routes;
 		}
+	}
+
+	/**
+	 * Apply description mode settings. Supports four modes:
+	 * - 'all'       — every tool keeps verbose descriptions (no-op)
+	 * - 'none'      — every tool gets minimal one-liner descriptions
+	 * - 'allowlist'  — only selected items keep verbose; rest get minimal
+	 * - 'blocklist'  — all verbose except selected items, which get minimal
+	 *
+	 * Backward compat: old boolean `minimal_descriptions: true` → treated as 'none'.
+	 */
+	private function maybe_apply_minimal_descriptions() {
+		$settings = get_option( 'wp_mcp_endpoint_settings', array() );
+
+		// Determine effective description mode.
+		$desc_mode = 'all';
+
+		if ( isset( $settings['description_mode'] ) ) {
+			$desc_mode = $settings['description_mode'];
+		} elseif ( ! empty( $settings['minimal_descriptions'] ) ) {
+			// Backward compat: old boolean toggle.
+			$desc_mode = 'none';
+		}
+
+		if ( 'all' === $desc_mode ) {
+			return;
+		}
+
+		$desc_items       = isset( $settings['description_items'] ) ? array_flip( $settings['description_items'] ) : array();
+		$desc_include_new = isset( $settings['description_include_new'] ) ? $settings['description_include_new'] : array();
+		$desc_known       = isset( $settings['description_known_routes'] ) ? array_flip( $settings['description_known_routes'] ) : array();
+
+		foreach ( $this->tools as &$tool ) {
+			// Skip built-in tools that don't map to a REST route.
+			if ( 'refresh_tools' === $tool['name'] || 'wp_api' === $tool['name'] ) {
+				continue;
+			}
+
+			$route_info = isset( $this->tool_routes[ $tool['name'] ] ) ? $this->tool_routes[ $tool['name'] ] : null;
+			$pattern    = $route_info ? $route_info['pattern'] : '';
+
+			$should_minimize = false;
+
+			if ( 'none' === $desc_mode ) {
+				$should_minimize = true;
+			} elseif ( 'allowlist' === $desc_mode ) {
+				// Verbose only if in the selected items list, or auto-included for its category.
+				$is_selected = isset( $desc_items[ $pattern ] );
+				$is_auto     = false;
+				if ( ! $is_selected && $pattern && ! empty( $desc_include_new ) && ! isset( $desc_known[ $pattern ] ) ) {
+					$category = $this->get_route_category( $pattern );
+					$is_auto  = in_array( $category, $desc_include_new, true );
+				}
+				$should_minimize = ! $is_selected && ! $is_auto;
+			} elseif ( 'blocklist' === $desc_mode ) {
+				// Minimize only if explicitly selected, or if it's a new route in an auto-included category.
+				$is_selected = isset( $desc_items[ $pattern ] );
+				$is_auto     = false;
+				if ( ! $is_selected && $pattern && ! empty( $desc_include_new ) && ! isset( $desc_known[ $pattern ] ) ) {
+					$category = $this->get_route_category( $pattern );
+					$is_auto  = in_array( $category, $desc_include_new, true );
+				}
+				$should_minimize = $is_selected || $is_auto;
+			}
+
+			if ( ! $should_minimize ) {
+				continue;
+			}
+
+			$schema = isset( $tool['inputSchema'] ) ? $tool['inputSchema'] : array();
+			$props  = isset( $schema['properties'] ) ? $schema['properties'] : array();
+
+			// Collect param names (excluding 'method' which is always present).
+			$param_names = array();
+			foreach ( $props as $name => $def ) {
+				if ( 'method' === $name ) {
+					continue;
+				}
+				$param_names[] = $name;
+			}
+
+			// Build one-liner: route [METHODS] — params list.
+			$route   = $pattern ? $pattern : $tool['name'];
+			$methods = isset( $props['method']['enum'] ) ? $props['method']['enum'] : array();
+			$desc    = $route . ' [' . implode( ', ', $methods ) . ']';
+
+			if ( ! empty( $param_names ) ) {
+				$desc .= ' — Params: ' . implode( ', ', $param_names );
+			}
+
+			$tool['description'] = $desc;
+
+			// Strip verbose descriptions from schema properties.
+			foreach ( $props as $name => &$prop ) {
+				unset( $prop['description'] );
+			}
+			unset( $prop );
+
+			$tool['inputSchema']['properties'] = $props;
+		}
+		unset( $tool );
 	}
 
 	/**

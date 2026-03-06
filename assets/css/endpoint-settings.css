@@ -111,12 +111,6 @@
 	transform: rotate(-90deg);
 }
 
-.wp-mcp-namespace-header .group-select-all {
-	margin-left: auto;
-	font-weight: normal;
-	font-size: 12px;
-}
-
 .wp-mcp-namespace-routes {
 	padding: 0;
 }
@@ -169,13 +163,22 @@
 .wp-mcp-method-badge.method-PATCH { background: #fcf8e3; color: #8a6d3b; }
 .wp-mcp-method-badge.method-DELETE { background: #f2dede; color: #a94442; }
 
-/* Auto-disable checkbox */
-.wp-mcp-auto-disable {
-	margin-top: 15px;
-	padding: 10px 12px;
-	background: #f6f7f7;
-	border: 1px solid #dcdcde;
-	border-radius: 4px;
+/* Group-level checkbox in category headers */
+.wp-mcp-namespace-header .ep-group-toggle,
+.wp-mcp-namespace-header .desc-group-toggle {
+	margin-right: 4px;
+}
+
+/* "Include new items" label in category headers */
+.wp-mcp-namespace-header .desc-include-new {
+	margin-left: auto;
+	font-weight: normal;
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+.wp-mcp-namespace-header .desc-include-new input {
+	margin-right: 3px;
 }
 
 /* Save feedback */

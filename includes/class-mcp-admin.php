@@ -106,23 +106,42 @@ class WP_MCP_Admin {
 			true
 		);
 
-		$discovery = new WP_MCP_Discovery();
-		$routes    = $discovery->get_all_route_patterns();
-		$current   = get_option( self::OPTION_NAME, array() );
+		$discovery      = new WP_MCP_Discovery();
+		$routes         = $discovery->get_all_route_patterns();
+		$routes_grouped = $discovery->get_all_route_patterns_grouped();
+		$current        = get_option( self::OPTION_NAME, array() );
 
 		$defaults = array(
-			'mode'             => 'all',
-			'endpoints'        => array(),
-			'auto_disable_new' => false,
-			'known_routes'     => array(),
+			'mode'                     => 'all',
+			'endpoints'                => array(),
+			'endpoint_include_new'     => array(),
+			'known_routes'             => array(),
+			'description_mode'         => '',
+			'description_items'        => array(),
+			'description_include_new'  => array(),
+			'description_known_routes' => array(),
 		);
 		$current = wp_parse_args( $current, $defaults );
 
+		// Backward compat: old auto_disable_new boolean → endpoint_include_new with all categories.
+		if ( empty( $current['endpoint_include_new'] ) && ! empty( $current['auto_disable_new'] ) ) {
+			$current['endpoint_include_new'] = array( 'post_types', 'taxonomies', 'core', 'plugin' );
+		}
+
+		// Backward compat: old minimal_descriptions boolean → description_mode 'none'.
+		if ( empty( $current['description_mode'] ) && ! empty( $current['minimal_descriptions'] ) ) {
+			$current['description_mode'] = 'none';
+		}
+		if ( empty( $current['description_mode'] ) ) {
+			$current['description_mode'] = 'none';
+		}
+
 		wp_localize_script( 'wp-mcp-endpoint-settings', 'wpMcpEndpointSettings', array(
-			'routes'  => $routes,
-			'current' => $current,
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( self::AJAX_ACTION ),
+			'routes'        => $routes,
+			'routesGrouped' => $routes_grouped,
+			'current'       => $current,
+			'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+			'nonce'         => wp_create_nonce( self::AJAX_ACTION ),
 		) );
 	}
 
@@ -156,7 +175,40 @@ class WP_MCP_Admin {
 			}
 		}
 
-		$auto_disable_new = ! empty( $data['auto_disable_new'] );
+		$valid_categories     = array( 'post_types', 'taxonomies', 'core', 'plugin' );
+		$endpoint_include_new = array();
+		if ( isset( $data['endpoint_include_new'] ) && is_array( $data['endpoint_include_new'] ) ) {
+			foreach ( $data['endpoint_include_new'] as $cat ) {
+				$cat = sanitize_key( $cat );
+				if ( in_array( $cat, $valid_categories, true ) ) {
+					$endpoint_include_new[] = $cat;
+				}
+			}
+		}
+
+		// Description mode settings.
+		$valid_desc_modes = array( 'all', 'allowlist', 'blocklist', 'none' );
+		$description_mode = isset( $data['description_mode'] ) ? sanitize_key( $data['description_mode'] ) : 'none';
+		if ( ! in_array( $description_mode, $valid_desc_modes, true ) ) {
+			$description_mode = 'none';
+		}
+
+		$description_items = array();
+		if ( isset( $data['description_items'] ) && is_array( $data['description_items'] ) ) {
+			foreach ( $data['description_items'] as $ep ) {
+				$description_items[] = sanitize_text_field( $ep );
+			}
+		}
+
+		$description_include_new = array();
+		if ( isset( $data['description_include_new'] ) && is_array( $data['description_include_new'] ) ) {
+			foreach ( $data['description_include_new'] as $cat ) {
+				$cat = sanitize_key( $cat );
+				if ( in_array( $cat, $valid_categories, true ) ) {
+					$description_include_new[] = $cat;
+				}
+			}
+		}
 
 		// Snapshot all current routes for detecting new ones later.
 		$discovery    = new WP_MCP_Discovery();
@@ -167,10 +219,14 @@ class WP_MCP_Admin {
 		}
 
 		$settings = array(
-			'mode'             => $mode,
-			'endpoints'        => $endpoints,
-			'auto_disable_new' => $auto_disable_new,
-			'known_routes'     => $known_routes,
+			'mode'                     => $mode,
+			'endpoints'                => $endpoints,
+			'endpoint_include_new'     => $endpoint_include_new,
+			'known_routes'             => $known_routes,
+			'description_mode'         => $description_mode,
+			'description_items'        => $description_items,
+			'description_include_new'  => $description_include_new,
+			'description_known_routes' => $known_routes,
 		);
 
 		update_option( self::OPTION_NAME, $settings );
@@ -228,9 +284,8 @@ class WP_MCP_Admin {
 	private function render_tab_settings() {
 		$current  = get_option( self::OPTION_NAME, array() );
 		$defaults = array(
-			'mode'             => 'all',
-			'endpoints'        => array(),
-			'auto_disable_new' => false,
+			'mode'      => 'all',
+			'endpoints' => array(),
 		);
 		$current = wp_parse_args( $current, $defaults );
 		?>
@@ -275,12 +330,28 @@ class WP_MCP_Admin {
 				</div>
 			</div>
 
-			<div id="wp-mcp-auto-disable" class="wp-mcp-auto-disable" style="<?php echo 'blocklist' === $current['mode'] ? '' : 'display:none;'; ?>">
-				<label>
-					<input type="checkbox" id="wp-mcp-auto-disable-new" <?php checked( $current['auto_disable_new'] ); ?>>
-					<?php esc_html_e( 'Automatically block newly discovered endpoints', 'wp-mcp-server' ); ?>
-				</label>
-				<p class="description"><?php esc_html_e( 'When new REST API routes appear (e.g. after installing a plugin), they will be blocked by default.', 'wp-mcp-server' ); ?></p>
+			<h2 style="margin-top: 30px;"><?php esc_html_e( 'Tool Descriptions', 'wp-mcp-server' ); ?></h2>
+			<p><?php esc_html_e( 'Control which tools get verbose descriptions vs minimal one-liners. Minimizing descriptions reduces token usage.', 'wp-mcp-server' ); ?></p>
+
+			<div class="wp-mcp-mode-selector" id="wp-mcp-desc-mode-selector">
+				<label><input type="radio" name="wp_mcp_desc_mode" value="all"><strong><?php esc_html_e( 'All Verbose', 'wp-mcp-server' ); ?></strong><span class="mode-description"><?php esc_html_e( 'Every tool gets full verbose descriptions.', 'wp-mcp-server' ); ?></span></label>
+				<label><input type="radio" name="wp_mcp_desc_mode" value="allowlist"><strong><?php esc_html_e( 'Allowlist', 'wp-mcp-server' ); ?></strong><span class="mode-description"><?php esc_html_e( 'Only selected tools/categories keep verbose descriptions; the rest get minimal.', 'wp-mcp-server' ); ?></span></label>
+				<label><input type="radio" name="wp_mcp_desc_mode" value="blocklist"><strong><?php esc_html_e( 'Blocklist', 'wp-mcp-server' ); ?></strong><span class="mode-description"><?php esc_html_e( 'All tools are verbose except selected ones, which get minimized.', 'wp-mcp-server' ); ?></span></label>
+				<label><input type="radio" name="wp_mcp_desc_mode" value="none"><strong><?php esc_html_e( 'All Minimal', 'wp-mcp-server' ); ?></strong><span class="mode-description"><?php esc_html_e( 'Every tool gets minimal one-liner descriptions. Maximum token savings. (Default)', 'wp-mcp-server' ); ?></span></label>
+			</div>
+
+			<div id="wp-mcp-desc-panel" class="wp-mcp-endpoint-panel" style="display:none;">
+				<div class="wp-mcp-endpoint-toolbar">
+					<input type="search" id="wp-mcp-desc-search" class="search-input" placeholder="<?php esc_attr_e( 'Search endpoints…', 'wp-mcp-server' ); ?>">
+					<span id="wp-mcp-desc-counter" class="counter"></span>
+					<span class="bulk-actions">
+						<button type="button" id="wp-mcp-desc-select-all" class="button button-small"><?php esc_html_e( 'Select All', 'wp-mcp-server' ); ?></button>
+						<button type="button" id="wp-mcp-desc-deselect-all" class="button button-small"><?php esc_html_e( 'Deselect All', 'wp-mcp-server' ); ?></button>
+					</span>
+				</div>
+				<div id="wp-mcp-desc-list" class="wp-mcp-endpoint-list">
+					<!-- Rendered by JS -->
+				</div>
 			</div>
 
 			<div class="wp-mcp-save-row">
@@ -295,7 +366,6 @@ class WP_MCP_Admin {
 	 * Tools tab: MCP Endpoint, Connection, OAuth config.
 	 */
 	private function render_tab_tools() {
-		$endpoint    = rest_url( 'mcp/v1' );
 		$current_uid = get_current_user_id();
 		$token       = false;
 		$gen_user_id = 0;
@@ -308,6 +378,63 @@ class WP_MCP_Admin {
 		}
 
 		$users = get_users( array( 'capability__in' => array( 'edit_posts' ) ) );
+		?>
+
+		<?php if ( $token ) : ?>
+			<?php $endpoint = rest_url( 'mcp/v1' ); ?>
+			<div class="card" style="max-width: none; border-left: 4px solid #00a32a;">
+				<h2><?php esc_html_e( 'Connection Ready', 'wp-mcp-server' ); ?></h2>
+				<p><?php esc_html_e( 'An Application Password was created. Copy one of the configuration snippets below into your MCP client.', 'wp-mcp-server' ); ?></p>
+				<p><strong><?php esc_html_e( 'This token is shown only once.', 'wp-mcp-server' ); ?></strong> <?php esc_html_e( 'If you lose it, generate a new one.', 'wp-mcp-server' ); ?></p>
+
+				<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
+				<textarea readonly rows="11" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+					echo esc_textarea( $this->build_config_json( $endpoint, $token, false ) );
+				?></textarea>
+
+				<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
+				<textarea readonly rows="11" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+					echo esc_textarea( $this->build_config_json( $endpoint, $token, true ) );
+				?></textarea>
+			</div>
+		<?php endif; ?>
+
+		<div class="card" style="max-width: none;">
+			<h2><?php esc_html_e( 'Generate Connection', 'wp-mcp-server' ); ?></h2>
+			<p><?php esc_html_e( 'Select a WordPress user and click Generate. This creates an Application Password and gives you a ready-to-paste config snippet.', 'wp-mcp-server' ); ?></p>
+			<p><?php esc_html_e( "The user's permissions will apply to all MCP operations — choose a user with the appropriate role.", 'wp-mcp-server' ); ?></p>
+
+			<form method="post">
+				<?php wp_nonce_field( self::NONCE_NAME, 'wp_mcp_generate_nonce' ); ?>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><label for="wp_mcp_user"><?php esc_html_e( 'WordPress User', 'wp-mcp-server' ); ?></label></th>
+						<td>
+							<select name="wp_mcp_user" id="wp_mcp_user" style="min-width: 250px;">
+								<?php foreach ( $users as $user ) : ?>
+									<option value="<?php echo esc_attr( $user->ID ); ?>"
+										<?php selected( $user->ID, $gen_user_id ? $gen_user_id : $current_uid ); ?>>
+										<?php echo esc_html( $user->display_name . ' (' . $user->user_login . ') — ' . implode( ', ', $user->roles ) ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+						</td>
+					</tr>
+				</table>
+
+				<?php settings_errors( self::PAGE_SLUG ); ?>
+
+				<?php submit_button( __( 'Generate Connection', 'wp-mcp-server' ), 'primary', 'submit', true ); ?>
+			</form>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Info tab: How It Works guide.
+	 */
+	private function render_tab_info() {
+		$endpoint = rest_url( 'mcp/v1' );
 		?>
 		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start;">
 
@@ -323,56 +450,6 @@ class WP_MCP_Admin {
 					</p>
 				</div>
 
-				<?php if ( $token ) : ?>
-					<div class="card" style="max-width: none; border-left: 4px solid #00a32a;">
-						<h2><?php esc_html_e( 'Connection Ready', 'wp-mcp-server' ); ?></h2>
-						<p><?php esc_html_e( 'An Application Password was created. Copy one of the configuration snippets below into your MCP client.', 'wp-mcp-server' ); ?></p>
-						<p><strong><?php esc_html_e( 'This token is shown only once.', 'wp-mcp-server' ); ?></strong> <?php esc_html_e( 'If you lose it, generate a new one.', 'wp-mcp-server' ); ?></p>
-
-						<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
-						<textarea readonly rows="11" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
-							echo esc_textarea( $this->build_config_json( $endpoint, $token, false ) );
-						?></textarea>
-
-						<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
-						<textarea readonly rows="11" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
-							echo esc_textarea( $this->build_config_json( $endpoint, $token, true ) );
-						?></textarea>
-					</div>
-				<?php endif; ?>
-
-				<div class="card" style="max-width: none;">
-					<h2><?php esc_html_e( 'Generate Connection', 'wp-mcp-server' ); ?></h2>
-					<p><?php esc_html_e( 'Select a WordPress user and click Generate. This creates an Application Password and gives you a ready-to-paste config snippet.', 'wp-mcp-server' ); ?></p>
-					<p><?php esc_html_e( "The user's permissions will apply to all MCP operations — choose a user with the appropriate role.", 'wp-mcp-server' ); ?></p>
-
-					<form method="post">
-						<?php wp_nonce_field( self::NONCE_NAME, 'wp_mcp_generate_nonce' ); ?>
-						<table class="form-table" role="presentation">
-							<tr>
-								<th scope="row"><label for="wp_mcp_user"><?php esc_html_e( 'WordPress User', 'wp-mcp-server' ); ?></label></th>
-								<td>
-									<select name="wp_mcp_user" id="wp_mcp_user" style="min-width: 250px;">
-										<?php foreach ( $users as $user ) : ?>
-											<option value="<?php echo esc_attr( $user->ID ); ?>"
-												<?php selected( $user->ID, $gen_user_id ? $gen_user_id : $current_uid ); ?>>
-												<?php echo esc_html( $user->display_name . ' (' . $user->user_login . ') — ' . implode( ', ', $user->roles ) ); ?>
-											</option>
-										<?php endforeach; ?>
-									</select>
-								</td>
-							</tr>
-						</table>
-
-						<?php settings_errors( self::PAGE_SLUG ); ?>
-
-						<?php submit_button( __( 'Generate Connection', 'wp-mcp-server' ), 'primary', 'submit', true ); ?>
-					</form>
-				</div>
-			</div>
-
-			<!-- Column 2: OAuth -->
-			<div>
 				<div class="card" style="max-width: none; border-left: 4px solid #2271b1;">
 					<h2><?php esc_html_e( 'OAuth 2.1 Configuration', 'wp-mcp-server' ); ?></h2>
 					<p><?php esc_html_e( 'For MCP clients that support OAuth 2.1 (automatic authentication via browser). No token needed — the client handles login automatically.', 'wp-mcp-server' ); ?></p>
@@ -389,37 +466,33 @@ class WP_MCP_Admin {
 				</div>
 			</div>
 
-		</div>
-		<?php
-	}
+			<!-- Column 2 -->
+			<div>
+				<div class="card" style="max-width: none;">
+					<h2><?php esc_html_e( 'How It Works', 'wp-mcp-server' ); ?></h2>
+					<ol>
+						<li><?php
+							echo wp_kses(
+								__( 'Click <strong>Generate Connection</strong> to create an Application Password and auth token.', 'wp-mcp-server' ),
+								array( 'strong' => array() )
+							);
+						?></li>
+						<li><?php esc_html_e( "Copy the config snippet into your MCP client's configuration file.", 'wp-mcp-server' ); ?></li>
+						<li><?php esc_html_e( 'Restart your MCP client. It will connect to your site and discover all available REST API routes as tools.', 'wp-mcp-server' ); ?></li>
+					</ol>
+					<p><?php esc_html_e( 'Each REST API route becomes an MCP tool:', 'wp-mcp-server' ); ?></p>
+					<table class="widefat striped">
+						<thead><tr><th><?php esc_html_e( 'Route', 'wp-mcp-server' ); ?></th><th><?php esc_html_e( 'Tool Name', 'wp-mcp-server' ); ?></th></tr></thead>
+						<tbody>
+							<tr><td><code>/wp/v2/posts</code></td><td><code>posts</code></td></tr>
+							<tr><td><code>/wp/v2/posts/&lt;id&gt;</code></td><td><code>posts_id</code></td></tr>
+							<tr><td><code>/wp/v2/media</code></td><td><code>media</code></td></tr>
+							<tr><td><code>/wc/v3/products</code></td><td><code>wc_v3_products</code></td></tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
 
-	/**
-	 * Info tab: How It Works guide.
-	 */
-	private function render_tab_info() {
-		?>
-		<div class="card" style="max-width: 800px;">
-			<h2><?php esc_html_e( 'How It Works', 'wp-mcp-server' ); ?></h2>
-			<ol>
-				<li><?php
-					echo wp_kses(
-						__( 'Click <strong>Generate Connection</strong> to create an Application Password and auth token.', 'wp-mcp-server' ),
-						array( 'strong' => array() )
-					);
-				?></li>
-				<li><?php esc_html_e( "Copy the config snippet into your MCP client's configuration file.", 'wp-mcp-server' ); ?></li>
-				<li><?php esc_html_e( 'Restart your MCP client. It will connect to your site and discover all available REST API routes as tools.', 'wp-mcp-server' ); ?></li>
-			</ol>
-			<p><?php esc_html_e( 'Each REST API route becomes an MCP tool:', 'wp-mcp-server' ); ?></p>
-			<table class="widefat striped">
-				<thead><tr><th><?php esc_html_e( 'Route', 'wp-mcp-server' ); ?></th><th><?php esc_html_e( 'Tool Name', 'wp-mcp-server' ); ?></th></tr></thead>
-				<tbody>
-					<tr><td><code>/wp/v2/posts</code></td><td><code>posts</code></td></tr>
-					<tr><td><code>/wp/v2/posts/&lt;id&gt;</code></td><td><code>posts_id</code></td></tr>
-					<tr><td><code>/wp/v2/media</code></td><td><code>media</code></td></tr>
-					<tr><td><code>/wc/v3/products</code></td><td><code>wc_v3_products</code></td></tr>
-				</tbody>
-			</table>
 		</div>
 		<?php
 	}
