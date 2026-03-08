@@ -9,6 +9,8 @@ A WordPress plugin that exposes a [Model Context Protocol (MCP)](https://modelco
 - **OAuth 2.1 authentication** — MCP clients authenticate automatically via browser login and consent (PKCE, no tokens to manage)
 - **Basic Auth support** — also supports Application Passwords for clients that don't support OAuth
 - **Settings page** — generate auth tokens and copy-ready config snippets in one click
+- **Endpoint filtering** — allowlist/blocklist endpoints by category (Post Types, Taxonomies, Core, Plugin) or use Compact Mode
+- **Description control** — per-category verbose/minimal tool descriptions to optimize token usage
 - **ACF support** — detects Advanced Custom Fields and adds ACF parameters to writable routes
 - **Media uploads** — supports base64 file uploads via MCP
 - **Zero configuration** — activate and connect
@@ -102,6 +104,47 @@ For clients that don't support OAuth, you can use Application Passwords directly
 ```
 
 > Use the **Settings > WP MCP Server** page to generate `YOUR_TOKEN` automatically. The token is shown only once — generate a new one if you lose it.
+
+## Settings
+
+All settings are under **Settings > WP MCP Server > Settings** tab.
+
+### Endpoint Filtering
+
+Control which REST API endpoints are exposed as MCP tools. Four modes are available:
+
+| Mode | Behavior |
+|---|---|
+| **All Endpoints** | Every discovered REST API route is exposed. (Default) |
+| **Allowlist** | Only the selected endpoints are exposed. |
+| **Blocklist** | All endpoints are exposed except the selected ones. |
+| **Compact Mode** | Replaces all tools with a single universal `wp_api` tool for minimal token usage. |
+
+In Allowlist and Blocklist modes, endpoints are grouped by category:
+
+- **Post Types** — routes for registered post types (posts, pages, custom post types)
+- **Taxonomies** — routes for registered taxonomies (categories, tags, custom taxonomies)
+- **Core** — other `/wp/v2/*` routes (users, comments, settings, search, etc.)
+- **Plugin** — non-core namespaces (`/wc/v3/*`, `/acf/v3/*`, etc.)
+
+Each category has:
+- A **group checkbox** to select/deselect all endpoints in the category
+- An **"Include new items"** toggle — automatically includes newly discovered endpoints in that category (e.g. after installing a plugin or registering a custom post type)
+
+### Tool Descriptions
+
+Control which tools get verbose descriptions vs minimal one-liners. Minimizing descriptions reduces token usage on every `tools/list` call.
+
+| Mode | Behavior |
+|---|---|
+| **All Verbose** | Every tool gets full verbose descriptions. |
+| **Allowlist** | Only selected tools/categories keep verbose descriptions; the rest get minimal. |
+| **Blocklist** | All tools are verbose except selected ones, which get minimized. |
+| **All Minimal** | Every tool gets minimal one-liner descriptions. (Default) |
+
+The Allowlist and Blocklist modes use the same category-based grouping as endpoint filtering, with per-category "Include new items" toggles.
+
+When switching to Allowlist mode for the first time, Post Types and Taxonomies are pre-selected as verbose, while Core and Plugin default to minimal.
 
 ## How It Works
 
