@@ -222,7 +222,7 @@ class WP_MCP_Executor {
 			'content' => array(
 				array(
 					'type' => 'text',
-					'text' => wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ),
+					'text' => wp_json_encode( $data, JSON_UNESCAPED_SLASHES ),
 				),
 			),
 			'isError' => $is_error,

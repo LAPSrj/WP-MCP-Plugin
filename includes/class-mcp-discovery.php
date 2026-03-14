@@ -481,7 +481,7 @@ class WP_MCP_Discovery {
 						),
 						'params'       => array(
 							'type'        => 'object',
-							'description' => 'Query parameters (for GET/DELETE) or body parameters (for POST/PUT/PATCH).',
+							'description' => 'Query parameters (GET) or body parameters (POST/PUT/PATCH/DELETE). Include _fields to limit response fields (e.g. {"_fields": "id,title,slug"})',
 						),
 						'file_content' => array(
 							'type'        => 'string',
@@ -654,6 +654,12 @@ class WP_MCP_Discovery {
 				'description' => 'Advanced Custom Fields values',
 			);
 		}
+
+		// Inject _fields — WordPress global query param for field selection.
+		$properties['_fields'] = array(
+			'type'        => 'string',
+			'description' => 'Comma-separated list of fields to include in the response (e.g. "id,title,slug"). Reduces response size.',
+		);
 
 		return array(
 			'type'       => 'object',
