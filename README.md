@@ -1,4 +1,4 @@
-# WP MCP Server
+# WP MCP Plugin
 
 A WordPress plugin that exposes a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server on your site, allowing AI agents to connect and interact with your content through the REST API.
 
@@ -20,7 +20,7 @@ A WordPress plugin that exposes a [Model Context Protocol (MCP)](https://modelco
 1. [Download the latest release](https://github.com/leandro/wp-mcp-plugin/releases/latest/download/wp-mcp-plugin.zip)
 2. Upload the zip via **Plugins > Add New > Upload Plugin** (or extract to `/wp-content/plugins/`)
 3. Activate the plugin through the **Plugins** menu
-4. Go to **Settings > WP MCP Server**
+4. Go to **Settings > MCP**
 5. Copy the config snippet for your MCP client
 
 ## Client Configuration
@@ -68,7 +68,7 @@ Add to `.mcp.json`:
 
 For clients that don't support OAuth, you can use Application Passwords directly.
 
-1. Go to **Settings > WP MCP Server**
+1. Go to **Settings > MCP**
 2. Select a user and click **Generate Connection**
 3. Copy the config snippet with the embedded auth token
 
@@ -103,11 +103,11 @@ For clients that don't support OAuth, you can use Application Passwords directly
 }
 ```
 
-> Use the **Settings > WP MCP Server** page to generate `YOUR_TOKEN` automatically. The token is shown only once — generate a new one if you lose it.
+> Use the **Settings > MCP** page to generate `YOUR_TOKEN` automatically. The token is shown only once — generate a new one if you lose it.
 
 ## Settings
 
-All settings are under **Settings > WP MCP Server > Settings** tab.
+All settings are under **Settings > MCP > Settings** tab.
 
 ### Endpoint Filtering
 

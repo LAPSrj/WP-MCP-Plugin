@@ -18,7 +18,7 @@ msgstr ""
 
 #: includes/class-mcp-admin.php:27 includes/class-mcp-admin.php:28
 #: includes/class-mcp-admin.php:97
-msgid "WP MCP Server"
+msgid "MCP"
 msgstr ""
 
 #: includes/class-mcp-admin.php:55

@@ -21,8 +21,8 @@ msgstr "Configurações"
 
 #: includes/class-mcp-admin.php:27 includes/class-mcp-admin.php:28
 #: includes/class-mcp-admin.php:97
-msgid "WP MCP Server"
-msgstr "WP MCP Server"
+msgid "MCP"
+msgstr "MCP"
 
 #: includes/class-mcp-admin.php:55
 msgid "Invalid user selected."

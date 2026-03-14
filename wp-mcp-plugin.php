@@ -3,7 +3,7 @@
  * Plugin Name: WP MCP Server
  * Plugin URI: https://github.com/leandro/wp-mcp-plugin
  * Description: Exposes a Model Context Protocol (MCP) server on your WordPress site, allowing AI agents to connect and interact with your site's REST API.
- * Version: 1.0.7
+ * Version: 1.0.8
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Leandro

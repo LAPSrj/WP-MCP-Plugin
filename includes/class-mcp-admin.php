@@ -26,8 +26,8 @@ class WP_MCP_Admin {
 
 	public function add_menu_page() {
 		add_options_page(
-			__( 'WP MCP Server', 'wp-mcp-server' ),
-			__( 'WP MCP Server', 'wp-mcp-server' ),
+			__( 'MCP', 'wp-mcp-server' ),
+			__( 'MCP', 'wp-mcp-server' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			array( $this, 'render_page' )
@@ -112,7 +112,7 @@ class WP_MCP_Admin {
 		$current        = get_option( self::OPTION_NAME, array() );
 
 		$defaults = array(
-			'mode'                     => 'all',
+			'mode'                     => 'compact',
 			'endpoints'                => array(),
 			'endpoint_include_new'     => array(),
 			'known_routes'             => array(),
@@ -250,7 +250,7 @@ class WP_MCP_Admin {
 		}
 		?>
 		<div class="wrap">
-			<h1><?php esc_html_e( 'WP MCP Server', 'wp-mcp-server' ); ?></h1>
+			<h1><?php esc_html_e( 'MCP', 'wp-mcp-server' ); ?></h1>
 
 			<h2 class="nav-tab-wrapper">
 				<?php foreach ( $tabs as $tab_key => $tab_label ) : ?>
@@ -284,7 +284,7 @@ class WP_MCP_Admin {
 	private function render_tab_settings() {
 		$current  = get_option( self::OPTION_NAME, array() );
 		$defaults = array(
-			'mode'      => 'all',
+			'mode'      => 'compact',
 			'endpoints' => array(),
 		);
 		$current = wp_parse_args( $current, $defaults );
