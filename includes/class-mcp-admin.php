@@ -469,27 +469,27 @@ class WP_MCP_Admin {
 			<!-- Column 2 -->
 			<div>
 				<div class="card" style="max-width: none;">
-					<h2><?php esc_html_e( 'How It Works', 'wp-mcp-server' ); ?></h2>
+					<h2><?php esc_html_e( 'Setup Instructions', 'wp-mcp-server' ); ?></h2>
+
+					<h3><?php esc_html_e( 'OAuth 2.1 (Recommended)', 'wp-mcp-server' ); ?></h3>
+					<ol>
+						<li><?php esc_html_e( 'Copy the OAuth config snippet from the left into your MCP client configuration file.', 'wp-mcp-server' ); ?></li>
+						<li><?php esc_html_e( 'Restart your MCP client. It will open a browser window for you to log in to WordPress.', 'wp-mcp-server' ); ?></li>
+						<li><?php esc_html_e( 'Authorize the connection. No token or password needed.', 'wp-mcp-server' ); ?></li>
+					</ol>
+
+					<h3><?php esc_html_e( 'Token (Application Password)', 'wp-mcp-server' ); ?></h3>
 					<ol>
 						<li><?php
 							echo wp_kses(
-								__( 'Click <strong>Generate Connection</strong> to create an Application Password and auth token.', 'wp-mcp-server' ),
+								__( 'Go to the <strong>Tools</strong> tab and click <strong>Generate Connection</strong>.', 'wp-mcp-server' ),
 								array( 'strong' => array() )
 							);
 						?></li>
-						<li><?php esc_html_e( "Copy the config snippet into your MCP client's configuration file.", 'wp-mcp-server' ); ?></li>
-						<li><?php esc_html_e( 'Restart your MCP client. It will connect to your site and discover all available REST API routes as tools.', 'wp-mcp-server' ); ?></li>
+						<li><?php esc_html_e( 'Select the WordPress user whose permissions should apply to MCP operations.', 'wp-mcp-server' ); ?></li>
+						<li><?php esc_html_e( 'Copy the generated config snippet into your MCP client configuration file.', 'wp-mcp-server' ); ?></li>
+						<li><?php esc_html_e( 'Restart your MCP client. The token is shown only once — generate a new one if lost.', 'wp-mcp-server' ); ?></li>
 					</ol>
-					<p><?php esc_html_e( 'Each REST API route becomes an MCP tool:', 'wp-mcp-server' ); ?></p>
-					<table class="widefat striped">
-						<thead><tr><th><?php esc_html_e( 'Route', 'wp-mcp-server' ); ?></th><th><?php esc_html_e( 'Tool Name', 'wp-mcp-server' ); ?></th></tr></thead>
-						<tbody>
-							<tr><td><code>/wp/v2/posts</code></td><td><code>posts</code></td></tr>
-							<tr><td><code>/wp/v2/posts/&lt;id&gt;</code></td><td><code>posts_id</code></td></tr>
-							<tr><td><code>/wp/v2/media</code></td><td><code>media</code></td></tr>
-							<tr><td><code>/wc/v3/products</code></td><td><code>wc_v3_products</code></td></tr>
-						</tbody>
-					</table>
 				</div>
 			</div>
 
