@@ -3,7 +3,7 @@
  * Plugin Name: WP MCP Server
  * Plugin URI: https://github.com/leandro/wp-mcp-plugin
  * Description: Exposes a Model Context Protocol (MCP) server on your WordPress site, allowing AI agents to connect and interact with your site's REST API.
- * Version: 1.0.6
+ * Version: 1.0.7
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Leandro
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WP_MCP_VERSION', '1.0.6' );
+define( 'WP_MCP_VERSION', '1.0.7' );
 define( 'WP_MCP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WP_MCP_BASENAME', plugin_basename( __FILE__ ) );
 
@@ -30,6 +30,7 @@ require_once WP_MCP_PATH . 'includes/class-mcp-executor.php';
 require_once WP_MCP_PATH . 'includes/class-mcp-server.php';
 require_once WP_MCP_PATH . 'includes/class-mcp-admin.php';
 require_once WP_MCP_PATH . 'includes/class-mcp-oauth.php';
+require_once WP_MCP_PATH . 'includes/class-mcp-github-updater.php';
 
 $wp_mcp_oauth = new WP_MCP_OAuth();
 $wp_mcp_oauth->init();
@@ -45,6 +46,9 @@ add_action( 'rest_api_init', function () use ( $wp_mcp_oauth ) {
 
 $wp_mcp_admin = new WP_MCP_Admin();
 $wp_mcp_admin->init();
+
+$wp_mcp_updater = new WP_MCP_GitHub_Updater();
+$wp_mcp_updater->init();
 
 add_filter( 'plugin_action_links_' . WP_MCP_BASENAME, function ( $links ) {
 	$url     = admin_url( 'options-general.php?page=' . WP_MCP_Admin::PAGE_SLUG );
