@@ -95,6 +95,17 @@ class WP_MCP_GitHub_Updater {
 	}
 
 	/**
+	 * Get plugin icon URLs.
+	 */
+	private function get_icons() {
+		$base = 'https://raw.githubusercontent.com/' . $this->repo . '/main/assets/';
+		return array(
+			'1x' => $base . 'icon-128x128.png',
+			'2x' => $base . 'icon-256x256.png',
+		);
+	}
+
+	/**
 	 * Get the zip download URL for a release.
 	 */
 	private function get_download_url( $release ) {
@@ -134,6 +145,7 @@ class WP_MCP_GitHub_Updater {
 				'new_version' => $remote_version,
 				'url'         => 'https://github.com/' . $this->repo,
 				'package'     => $this->get_download_url( $release ),
+				'icons'       => $this->get_icons(),
 			);
 		}
 
@@ -173,6 +185,7 @@ class WP_MCP_GitHub_Updater {
 				'changelog'    => nl2br( esc_html( $release->body ) ),
 			),
 			'download_link'     => $this->get_download_url( $release ),
+			'icons'             => $this->get_icons(),
 		);
 
 		return $info;
