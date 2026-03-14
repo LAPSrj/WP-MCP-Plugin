@@ -436,61 +436,64 @@ class WP_MCP_Admin {
 	private function render_tab_info() {
 		$endpoint = rest_url( 'mcp/v1' );
 		?>
+		<div class="card" style="max-width: none;">
+			<h2><?php esc_html_e( 'MCP Endpoint', 'wp-mcp-server' ); ?></h2>
+			<p><?php esc_html_e( 'AI agents connect to your site at:', 'wp-mcp-server' ); ?></p>
+			<p>
+				<input type="text" value="<?php echo esc_attr( $endpoint ); ?>" readonly
+					style="width: 100%; font-family: monospace; font-size: 14px; padding: 8px;"
+					onclick="this.select();" />
+			</p>
+		</div>
+
 		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start;">
 
-			<!-- Column 1 -->
-			<div>
-				<div class="card" style="max-width: none;">
-					<h2><?php esc_html_e( 'MCP Endpoint', 'wp-mcp-server' ); ?></h2>
-					<p><?php esc_html_e( 'AI agents connect to your site at:', 'wp-mcp-server' ); ?></p>
-					<p>
-						<input type="text" value="<?php echo esc_attr( $endpoint ); ?>" readonly
-							style="width: 100%; font-family: monospace; font-size: 14px; padding: 8px;"
-							onclick="this.select();" />
-					</p>
-				</div>
+			<!-- OAuth 2.1 -->
+			<div class="card" style="max-width: none; border-left: 4px solid #2271b1;">
+				<h2><?php esc_html_e( 'OAuth 2.1 (Recommended)', 'wp-mcp-server' ); ?></h2>
+				<p><?php esc_html_e( 'For MCP clients that support OAuth 2.1 (automatic authentication via browser). No token needed — the client handles login automatically.', 'wp-mcp-server' ); ?></p>
+				<ol>
+					<li><?php esc_html_e( 'Copy a config snippet below into your MCP client configuration file.', 'wp-mcp-server' ); ?></li>
+					<li><?php esc_html_e( 'Restart your MCP client. It will open a browser window for you to log in to WordPress.', 'wp-mcp-server' ); ?></li>
+					<li><?php esc_html_e( 'Authorize the connection.', 'wp-mcp-server' ); ?></li>
+				</ol>
 
-				<div class="card" style="max-width: none; border-left: 4px solid #2271b1;">
-					<h2><?php esc_html_e( 'OAuth 2.1 Configuration', 'wp-mcp-server' ); ?></h2>
-					<p><?php esc_html_e( 'For MCP clients that support OAuth 2.1 (automatic authentication via browser). No token needed — the client handles login automatically.', 'wp-mcp-server' ); ?></p>
+				<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
+				<textarea readonly rows="7" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+					echo esc_textarea( $this->build_oauth_config_json( $endpoint, false ) );
+				?></textarea>
 
-					<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
-					<textarea readonly rows="7" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
-						echo esc_textarea( $this->build_oauth_config_json( $endpoint, false ) );
-					?></textarea>
-
-					<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
-					<textarea readonly rows="8" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
-						echo esc_textarea( $this->build_oauth_config_json( $endpoint, true ) );
-					?></textarea>
-				</div>
+				<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
+				<textarea readonly rows="8" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+					echo esc_textarea( $this->build_oauth_config_json( $endpoint, true ) );
+				?></textarea>
 			</div>
 
-			<!-- Column 2 -->
-			<div>
-				<div class="card" style="max-width: none;">
-					<h2><?php esc_html_e( 'Setup Instructions', 'wp-mcp-server' ); ?></h2>
+			<!-- Token -->
+			<div class="card" style="max-width: none; border-left: 4px solid #dba617;">
+				<h2><?php esc_html_e( 'Token (Application Password)', 'wp-mcp-server' ); ?></h2>
+				<p><?php esc_html_e( 'For MCP clients that do not support OAuth. Uses a generated Application Password token for authentication.', 'wp-mcp-server' ); ?></p>
+				<ol>
+					<li><?php
+						echo wp_kses(
+							__( 'Go to the <strong>Tools</strong> tab and click <strong>Generate Connection</strong>.', 'wp-mcp-server' ),
+							array( 'strong' => array() )
+						);
+					?></li>
+					<li><?php esc_html_e( 'Select the WordPress user whose permissions should apply to MCP operations.', 'wp-mcp-server' ); ?></li>
+					<li><?php esc_html_e( 'Copy the generated config snippet into your MCP client configuration file.', 'wp-mcp-server' ); ?></li>
+					<li><?php esc_html_e( 'Restart your MCP client. The token is shown only once — generate a new one if lost.', 'wp-mcp-server' ); ?></li>
+				</ol>
 
-					<h3><?php esc_html_e( 'OAuth 2.1 (Recommended)', 'wp-mcp-server' ); ?></h3>
-					<ol>
-						<li><?php esc_html_e( 'Copy the OAuth config snippet from the left into your MCP client configuration file.', 'wp-mcp-server' ); ?></li>
-						<li><?php esc_html_e( 'Restart your MCP client. It will open a browser window for you to log in to WordPress.', 'wp-mcp-server' ); ?></li>
-						<li><?php esc_html_e( 'Authorize the connection. No token or password needed.', 'wp-mcp-server' ); ?></li>
-					</ol>
+				<h3>Claude Desktop <small><code>claude_desktop_config.json</code></small></h3>
+				<textarea readonly rows="10" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+					echo esc_textarea( $this->build_config_json( $endpoint, 'YOUR_TOKEN', false ) );
+				?></textarea>
 
-					<h3><?php esc_html_e( 'Token (Application Password)', 'wp-mcp-server' ); ?></h3>
-					<ol>
-						<li><?php
-							echo wp_kses(
-								__( 'Go to the <strong>Tools</strong> tab and click <strong>Generate Connection</strong>.', 'wp-mcp-server' ),
-								array( 'strong' => array() )
-							);
-						?></li>
-						<li><?php esc_html_e( 'Select the WordPress user whose permissions should apply to MCP operations.', 'wp-mcp-server' ); ?></li>
-						<li><?php esc_html_e( 'Copy the generated config snippet into your MCP client configuration file.', 'wp-mcp-server' ); ?></li>
-						<li><?php esc_html_e( 'Restart your MCP client. The token is shown only once — generate a new one if lost.', 'wp-mcp-server' ); ?></li>
-					</ol>
-				</div>
+				<h3>Claude Code / Cursor <small><code>.mcp.json</code></small></h3>
+				<textarea readonly rows="11" style="width: 100%; font-family: monospace; font-size: 13px; padding: 8px; background: #f0f0f1;" onclick="this.select();"><?php
+					echo esc_textarea( $this->build_config_json( $endpoint, 'YOUR_TOKEN', true ) );
+				?></textarea>
 			</div>
 
 		</div>
